@@ -16,12 +16,13 @@ import { Progress } from '@/components/ui/progress';
 import { Screen } from '@/components/ui/screen';
 import { Chips } from '@/components/ui/segmented';
 import { Sheet } from '@/components/ui/sheet';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatNumber } from '@/lib/format';
 import { plumberTier } from '@/lib/tier';
 import { colors, radius, space } from '@/theme/tokens';
 import { HomeTopBar, initialsOf } from './parts';
+import { RewardsSkeleton } from '@/components/skeletons';
 
 type Reward = components['schemas']['AppRewardResponseDto'];
 type Category = Reward['category'];
@@ -53,7 +54,15 @@ export function RewardsScreen() {
   );
 
   const loadError: unknown = wallet.error ?? all.error;
-  if (wallet.isLoading || all.isLoading) return <Loading />;
+  if (wallet.isLoading || all.isLoading)
+    return (
+      <View style={styles.flex}>
+        <HomeTopBar title="Rewards" initials={initialsOf(name)} />
+        <Screen bottomInset={DOCK_HEIGHT}>
+          <RewardsSkeleton />
+        </Screen>
+      </View>
+    );
   if (loadError || !wallet.data) return <ErrorState error={loadError} onRetry={() => void Promise.all([wallet.refetch(), all.refetch()])} />;
 
   const balance = wallet.data.available;

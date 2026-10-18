@@ -7,12 +7,13 @@ import { Card, HeroCard } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 import { Screen, SectionTitle } from '@/components/ui/screen';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format';
 import { retailerTier } from '@/lib/tier';
 import { colors, radius, shadows, space } from '@/theme/tokens';
 import { ActivityRow, HomeTopBar, initialsOf, ManagerCard, QuickActions, StatTile } from '../shared/parts';
+import { RetailerHomeSkeleton } from '@/components/skeletons';
 
 const daysLeftInMonth = () => {
   const now = new Date();
@@ -27,7 +28,15 @@ export function RetailerHome() {
   const stock = $api.useQuery('get', '/api/v1/app/inventory', { params: { query: { pageSize: 100 } } });
 
   const loadError: unknown = me.error;
-  if (me.isLoading) return <Loading />;
+  if (me.isLoading)
+    return (
+      <View style={styles.flex}>
+        <HomeTopBar title="Home" initials="" />
+        <Screen bottomInset={DOCK_HEIGHT}>
+          <RetailerHomeSkeleton />
+        </Screen>
+      </View>
+    );
   if (loadError || !me.data) return <ErrorState error={loadError} onRetry={() => void me.refetch()} />;
 
   const r = me.data;

@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { ErrorState, Loading } from '@/components/ui/states';
+import {ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatDate, formatINR, formatNumber } from '@/lib/format';
 import { pickDocument, takePhoto } from '@/lib/pick-file';
 import { colors, radius, space } from '@/theme/tokens';
+import { InvoiceDetailSkeleton } from '@/components/skeletons';
 
 const TONE: Record<string, Tone> = { Submitted: 'gold', 'Under Review': 'gold', Approved: 'emerald', Rejected: 'error', 'More Information Required': 'warning' };
 
@@ -24,7 +25,12 @@ export function InvoiceDetailScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const loadError: unknown = invoice.error;
-  if (invoice.isLoading) return <Loading />;
+  if (invoice.isLoading)
+    return (
+      <Screen header={<AppHeader back eyebrow="Invoice" title="Invoice" />}>
+        <InvoiceDetailSkeleton />
+      </Screen>
+    );
   if (loadError || !invoice.data) return <ErrorState error={loadError} onRetry={() => void invoice.refetch()} />;
   const inv = invoice.data;
   const inc = incentive.data;

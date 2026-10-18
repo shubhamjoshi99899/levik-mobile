@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { productImage } from '@/lib/product-image';
 import { colors, radius, space } from '@/theme/tokens';
 import { DealerCard, EarningPill, SchemeList } from './parts';
+import { ProductDetailSkeleton } from '@/components/skeletons';
 
 /** One product: what it earns the caller, live schemes, and the dealers stocking it (nearby first). */
 export function ProductDetailScreen() {
@@ -24,7 +25,12 @@ export function ProductDetailScreen() {
   const { data, error, isLoading, refetch, isRefetching } = $api.useQuery('get', '/api/v1/app/explore/products/{id}', { params: { path: { id } } });
   const loadError: unknown = error;
 
-  if (isLoading) return <Loading />;
+  if (isLoading)
+    return (
+      <Screen header={<AppHeader back eyebrow="Explore" title="Product" />}>
+        <ProductDetailSkeleton />
+      </Screen>
+    );
   if (loadError || !data) return <ErrorState error={loadError} onRetry={() => void refetch()} />;
   const { product, dealers, city } = data;
   const source = productImage(product.imageUrl);

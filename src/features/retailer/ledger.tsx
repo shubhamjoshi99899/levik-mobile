@@ -10,12 +10,13 @@ import { Icon } from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 import { AppHeader, Screen } from '@/components/ui/screen';
 import { Chips } from '@/components/ui/segmented';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format';
 import { retailerTier } from '@/lib/tier';
 import { GST } from '@/mocks';
 import { colors, radius, space } from '@/theme/tokens';
+import { LedgerSkeleton } from '@/components/skeletons';
 
 type Filter = 'all' | 'Approved' | 'review' | 'Rejected';
 const TONE: Record<string, Tone> = { Submitted: 'gold', 'Under Review': 'gold', Approved: 'emerald', Rejected: 'error', 'More Information Required': 'warning' };
@@ -28,7 +29,12 @@ export function RetailerLedger() {
   const invoices = $api.useQuery('get', '/api/v1/app/invoices', { params: { query: { pageSize: 100 } } });
 
   const loadError: unknown = me.error ?? invoices.error;
-  if (me.isLoading || invoices.isLoading) return <Loading />;
+  if (me.isLoading || invoices.isLoading)
+    return (
+      <Screen header={<AppHeader brand eyebrow="Levik Atelier" title="GST Tax Ledger" />} bottomInset={DOCK_HEIGHT}>
+        <LedgerSkeleton />
+      </Screen>
+    );
   if (loadError || !me.data) return <ErrorState error={loadError} onRetry={() => void Promise.all([me.refetch(), invoices.refetch()])} />;
 
   const r = me.data;

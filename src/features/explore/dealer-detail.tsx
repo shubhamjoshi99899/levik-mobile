@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { HeroCard } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { callNumber, openDirections } from '@/lib/contact';
 import { formatNumber, maskMobile } from '@/lib/format';
 import { colors, radius, shadows, space } from '@/theme/tokens';
 import { ProductThumb } from '../shared/parts';
 import { EarningPill, StockBadge } from './parts';
+import { DealerDetailSkeleton } from '@/components/skeletons';
 
 /** One dealer: contact, and every product in stock with what it earns the caller. */
 export function DealerDetailScreen() {
@@ -21,7 +22,12 @@ export function DealerDetailScreen() {
   const { data, error, isLoading, refetch, isRefetching } = $api.useQuery('get', '/api/v1/app/explore/dealers/{id}', { params: { path: { id } } });
   const loadError: unknown = error;
 
-  if (isLoading) return <Loading />;
+  if (isLoading)
+    return (
+      <Screen header={<AppHeader back eyebrow="Authorized dealer" title="Dealer" />}>
+        <DealerDetailSkeleton />
+      </Screen>
+    );
   if (loadError || !data) return <ErrorState error={loadError} onRetry={() => void refetch()} />;
   const { dealer, products } = data;
   const best = products.reduce((max, p) => Math.max(max, p.earning.points), 0);

@@ -12,13 +12,14 @@ import { Field } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Chips, Segmented } from '@/components/ui/segmented';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { productImage } from '@/lib/product-image';
 import { useDebounced } from '@/lib/use-debounced';
 import { colors, radius, shadows, space } from '@/theme/tokens';
 import { HomeTopBar, initialsOf } from '../shared/parts';
 import { DealerCard, EarningPill, type ExploreProduct } from './parts';
+import { DealerCardsSkeleton, ProductGridSkeleton } from '@/components/skeletons';
 
 type Category = components['schemas']['ExploreProductDto']['category'];
 type View_ = 'products' | 'dealers';
@@ -84,7 +85,7 @@ function ProductsView({ term }: { term: string }) {
   return (
     <>
       <Chips value={category} onChange={setCategory} options={[{ value: 'all' as const, label: 'All products' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]} />
-      {isLoading ? <Loading /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
+      {isLoading ? <ProductGridSkeleton count={6} /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
       {data && data.items.length === 0 ? <Empty icon="search_off" title="No matching products" /> : null}
       <View style={styles.grid}>
         {data?.items.map((p) => (
@@ -140,7 +141,7 @@ function DealersView({ term }: { term: string }) {
           </Text>
         </View>
       ) : null}
-      {isLoading ? <Loading /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
+      {isLoading ? <DealerCardsSkeleton count={3} /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
       {data && data.dealers.length === 0 ? <Empty icon="storefront" title="No dealers found" detail="Try another city or shop name." /> : null}
       {data?.dealers.map((d) => (
         <DealerCard

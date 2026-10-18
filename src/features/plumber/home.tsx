@@ -10,12 +10,13 @@ import { Icon } from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 import { Screen, SectionTitle } from '@/components/ui/screen';
 import { Segmented } from '@/components/ui/segmented';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { firstName, formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format';
 import { plumberTier } from '@/lib/tier';
 import { colors, radius, space } from '@/theme/tokens';
 import { ActivityRow, HomeTopBar, initialsOf, ManagerCard, QuickActions } from '../shared/parts';
+import { PlumberHomeSkeleton } from '@/components/skeletons';
 
 type Feed = 'all' | 'scans' | 'redeemed';
 
@@ -32,7 +33,15 @@ export function PlumberHome() {
   const refetchAll = () => Promise.all([me.refetch(), pending.refetch(), scans.refetch(), redemptions.refetch(), schemes.refetch(), rewards.refetch()]);
   const loadError: unknown = me.error;
 
-  if (me.isLoading) return <Loading />;
+  if (me.isLoading)
+    return (
+      <View style={styles.flex}>
+        <HomeTopBar title="Home" initials="" />
+        <Screen bottomInset={DOCK_HEIGHT}>
+          <PlumberHomeSkeleton />
+        </Screen>
+      </View>
+    );
   if (loadError || !me.data) return <ErrorState error={loadError} onRetry={() => void me.refetch()} />;
 
   const p = me.data;

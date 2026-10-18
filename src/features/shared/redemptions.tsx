@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { colors, radius, space } from '@/theme/tokens';
+import { ListCardsSkeleton } from '@/components/skeletons';
 
 const STATUS_TONE: Record<string, Tone> = {
   Requested: 'gold',
@@ -42,7 +43,7 @@ export function RedemptionsScreen() {
 
   return (
     <Screen header={<AppHeader back eyebrow="Rewards" title="My Redemptions" />} onRefresh={() => void refetch()} refreshing={isRefetching}>
-      {isLoading ? <Loading /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
+      {isLoading ? <ListCardsSkeleton count={4} /> : loadError ? <ErrorState error={loadError} onRetry={() => void refetch()} /> : null}
       {data && data.items.length === 0 ? <Empty icon="redeem" title="No reward requests yet" detail="Redeem a reward from the marketplace to see it here." /> : null}
       {data?.items.map((r) => (
         <Card key={r.id} style={styles.gap}>

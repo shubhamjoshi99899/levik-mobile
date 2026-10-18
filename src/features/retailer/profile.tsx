@@ -9,20 +9,26 @@ import { Card, HeroCard } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { ErrorState, Loading } from '@/components/ui/states';
+import {ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatINR, formatNumber, maskMobile } from '@/lib/format';
 import { retailerTier } from '@/lib/tier';
 import { TERRITORY_MANAGER } from '@/mocks';
 import { colors, radius, space } from '@/theme/tokens';
 import { Menu } from '../shared/menu';
+import { ProfileSkeleton } from '@/components/skeletons';
 
 export function RetailerProfile() {
   const router = useRouter();
   const me = $api.useQuery('get', '/api/v1/app/retailers/me');
   const schemes = $api.useQuery('get', '/api/v1/app/schemes');
   const loadError: unknown = me.error;
-  if (me.isLoading) return <Loading />;
+  if (me.isLoading)
+    return (
+      <Screen header={<AppHeader back eyebrow="Levik Luxury" title="Profile Account" />}>
+        <ProfileSkeleton />
+      </Screen>
+    );
   if (loadError || !me.data) return <ErrorState error={loadError} onRetry={() => void me.refetch()} />;
 
   const r = me.data;

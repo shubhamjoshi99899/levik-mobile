@@ -11,11 +11,12 @@ import { Card, HeroCard } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
 import { Chips } from '@/components/ui/segmented';
-import { Empty, ErrorState, Loading } from '@/components/ui/states';
+import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { formatINR, formatNumber, formatRelative } from '@/lib/format';
 import { plumberTier } from '@/lib/tier';
 import { colors, radius, space } from '@/theme/tokens';
+import { PassbookSkeleton } from '@/components/skeletons';
 
 type Entry = components['schemas']['PointsTransactionResponseDto'];
 type Filter = 'all' | 'credits' | 'debits' | 'bonus';
@@ -45,7 +46,12 @@ export function Passbook({ standalone = false }: { standalone?: boolean }) {
   });
 
   const loadError: unknown = wallet.error ?? ledger.error;
-  if (wallet.isLoading || ledger.isLoading) return <Loading />;
+  if (wallet.isLoading || ledger.isLoading)
+    return (
+      <Screen header={<AppHeader back={standalone} brand={!standalone} eyebrow="Levik Atelier" title="Passbook Ledger" />} bottomInset={standalone ? 0 : DOCK_HEIGHT}>
+        <PassbookSkeleton />
+      </Screen>
+    );
   if (loadError || !wallet.data) return <ErrorState error={loadError} onRetry={() => void Promise.all([wallet.refetch(), ledger.refetch()])} />;
 
   const w = wallet.data;

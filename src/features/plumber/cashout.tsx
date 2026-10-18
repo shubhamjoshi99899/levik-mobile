@@ -10,12 +10,13 @@ import { Card, HeroCard } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
-import { Loading } from '@/components/ui/states';
+
 import { Text } from '@/components/ui/text';
 import { formatINR, formatNumber } from '@/lib/format';
 import { plumberTier } from '@/lib/tier';
 import { CASHOUT, PAYOUT_ACCOUNTS } from '@/mocks';
 import { colors, radius, space } from '@/theme/tokens';
+import { CashoutSkeleton } from '@/components/skeletons';
 
 /**
  * UPI / bank cashout — UI ONLY (mock). Uses the real wallet balance, but no payout request is sent:
@@ -30,7 +31,12 @@ export function CashoutScreen() {
   const [channel, setChannel] = useState(PAYOUT_ACCOUNTS[0].id);
   const [done, setDone] = useState(false);
 
-  if (wallet.isLoading) return <Loading />;
+  if (wallet.isLoading)
+    return (
+      <Screen header={<AppHeader back eyebrow="Bank encrypted" title="Instant UPI Payout" />}>
+        <CashoutSkeleton />
+      </Screen>
+    );
   const balance = wallet.data?.available ?? 0;
   const tier = plumberTier(wallet.data?.lifetime ?? 0);
   const value = Number(amount || 0);
