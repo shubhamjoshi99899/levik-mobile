@@ -52,19 +52,26 @@ export function PlumberHome() {
     <View style={styles.flex}>
       <HomeTopBar title="Home" initials={initialsOf(p.name)} />
       <Screen onRefresh={() => void refetchAll()} refreshing={me.isRefetching} bottomInset={DOCK_HEIGHT}>
-        <View style={styles.greetRow}>
-          <View style={styles.flex}>
-            <View style={styles.nameRow}>
-              <Text variant="headlineXl" color={colors.inkStrong}>
-                Namaste, {firstName(p.name)}!
-              </Text>
-              {p.verificationStatus === 'Verified' ? <Icon name="verified_user" size={22} color={colors.emerald} /> : null}
-            </View>
-            <Text variant="body" color={colors.muted}>
+        <View style={styles.greeting}>
+          {/* Greeting gets the full width; the verified mark sits right after the name (wraps with it). */}
+          <View style={styles.nameRow}>
+            <Text variant="headlineXl" color={colors.inkStrong} style={styles.name}>
+              Namaste, {firstName(p.name)}!
+            </Text>
+            {p.verificationStatus === 'Verified' ? (
+              <View style={styles.verified} accessibilityLabel="KYC verified">
+                <Icon name="verified" size={20} color={colors.emerald} />
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.idRow}>
+            <Text variant="body" color={colors.muted} style={styles.name}>
               Master Plumber ID: <Text variant="labelLg" color={colors.inkStrong}>#{p.id}</Text>
             </Text>
+            <View style={styles.tierBadge}>
+              <Badge label={tier.name} tone="gold" icon="military_tech" />
+            </View>
           </View>
-          <Badge label={tier.name} tone="gold" icon="military_tech" />
         </View>
 
         {p.verificationStatus !== 'Verified' ? (
@@ -266,8 +273,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   gap: { gap: space.md },
   tabular: { fontVariant: ['tabular-nums'] },
-  greetRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  greeting: { gap: 6 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { flexShrink: 1 },
+  verified: { flexShrink: 0 },
+  idRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  tierBadge: { flexShrink: 0 },
   kycBanner: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, backgroundColor: colors.warningWash },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between' },
   balance: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 },

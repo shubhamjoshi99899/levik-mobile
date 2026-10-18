@@ -1,8 +1,7 @@
-import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { TabTrigger, type TabTriggerSlotProps } from 'expo-router/ui';
 import type { ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, shadows } from '@/theme/tokens';
 import { Icon } from './ui/icon';
@@ -26,14 +25,13 @@ function TabButton({ isFocused, icon, label, ref, ...props }: TabTriggerSlotProp
   );
 }
 
-/** Frosted bottom dock with a raised, gold-ringed centre action (scan for plumbers, invoice upload for retailers). */
+/** Solid bottom dock with a raised, gold-ringed centre action (scan for plumbers, invoice upload for retailers). */
 export function TabDock({ role }: { role: 'plumber' | 'retailer' }): ReactNode {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const center = role === 'plumber' ? { icon: 'qr_code_scanner', label: 'Scan', href: '/scan' as const } : { icon: 'upload_file', label: 'Invoice', href: '/invoice-upload' as const };
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {Platform.OS === 'web' ? <View style={[StyleSheet.absoluteFill, styles.webGlass]} /> : <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />}
       <View style={styles.row}>
         <TabTrigger name="index" href="/" asChild>
           <TabButton icon="home" label="Home" />
@@ -61,8 +59,18 @@ export function TabDock({ role }: { role: 'plumber' | 'retailer' }): ReactNode {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopWidth: 1, borderTopColor: 'rgba(15, 41, 82, 0.06)', overflow: 'visible' },
-  webGlass: { backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(16px)' } as never,
+  // Solid surface (not frosted): scrolled content must never show through the navigation.
+  wrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    overflow: 'visible',
+    boxShadow: '0 -4px 16px -4px rgba(11, 30, 61, 0.08)',
+  },
   row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', paddingTop: 8, paddingHorizontal: 8 },
   tab: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 4, minHeight: 48 },
   tabLabel: { textTransform: 'none', letterSpacing: 0.2 },
