@@ -1,18 +1,47 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, useFonts } from '@expo-google-fonts/plus-jakarta-sans';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { SplashScreen, Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { queryClient } from '@/api/client';
+import { useSession } from '@/api/session';
+import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({ PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
+  const session = useSession();
+  const ready = (fontsLoaded || Boolean(fontError)) && session.status !== 'loading';
+
+  useEffect(() => {
+    if (ready) SplashScreen.hide();
+  }, [ready]);
+
+  if (!ready) return null;
+
+  const role = session.status === 'signedIn' ? session.user.role : null;
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+          {/* Plumbers and retailers */}
+          <Stack.Protected guard={role === 'plumber' || role === 'retailer'} redirectTo={role === 'guest' ? '/role' : '/welcome'}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+          {/* Phone verified by OTP, not registered yet */}
+          <Stack.Protected guard={role === 'guest'}>
+            <Stack.Screen name="(onboarding)" />
+          </Stack.Protected>
+          {/* Signed out */}
+          <Stack.Protected guard={role === null}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+        </Stack>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

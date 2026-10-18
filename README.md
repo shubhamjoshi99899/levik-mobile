@@ -1,56 +1,105 @@
-# Welcome to your Expo app 👋
+# Levik Partner (mobile app)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Expo / React Native app for the **Levik Rewards Programme**, used by plumbers and retailers. It is built from the Stitch "Levik Luxury" designs and talks to the [Levik API](https://github.com/shubhamjoshi99899/levik_-backend).
 
-## Get started
+- **Plumbers:**
+  - Scan the QR label on a product. The API checks the label is genuine, then the scan goes to the admin team for approval.
+  - Earn points, and track them in the passbook.
+  - Redeem rewards, follow schemes, and find dealers.
+- **Retailers:**
+  - Upload GST invoices (photo or PDF) with their line items, and see the incentive the API calculates.
+  - Track the monthly sales target, the incentive ledger and schemes.
+  - Redeem rewards.
 
-1. Install dependencies
+## Quick start
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Requires Node.js 22+ and a running Levik API (default `http://localhost:4100`, seeded with `npm run db:seed`).
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+- **Phone:** scan the QR code shown by `expo start` with **Expo Go**. The app reaches the API through your computer's LAN IP, which it reads from the Expo dev server, so the phone and computer must be on the same Wi-Fi. This is the only way to test real QR label scanning.
+- **Web:** press `w`, or run `npx expo start --web --port 8081`. Add `http://localhost:8081` to the API's `CORS_ORIGINS`.
+- **Simulators:** `npx expo start --ios` or `--android` need Xcode or Android Studio.
 
-### Other setup steps
+Set `EXPO_PUBLIC_API_URL` (for example in `.env`) to point the app at a different API, such as staging.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Test accounts (local seed)
 
-## Learn more
+Sign in with OTP code **`123456`**. It only works for numbers listed in the API's `OTP_TEST_CODES`, and only outside production.
 
-To learn more about developing your project with Expo, look at the following resources:
+| Mobile | Who |
+| ------ | --- |
+| `98290 11234` | Ramesh Kumar, plumber (PLM-1001) |
+| `98290 41127` | Sharma Sanitary Store, retailer (RTL-2001) |
+| `99000 11122` | New number: goes through role selection and registration |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+To test scanning, generate a label batch in the admin portal (**Product → QR labels**), print the PDF, and scan a label with Expo Go. On web or a simulator, type the serial instead (Scan → Enter serial number).
 
-## Join the community
+## What is live and what is mock
 
-Join our community of developers creating universal apps.
+| Area | Data |
+| ---- | ---- |
+| OTP sign-in, registration, session refresh | Live (API) |
+| Dashboards, wallet, passbook, tiers | Live. Tiers are derived from points and sales in `src/lib/tier.ts` |
+| QR scan → resolve label → submit scan (dealer, invoice no., site, photo) | Live |
+| Rewards marketplace, redeem, my redemptions, cancel | Live |
+| Invoice upload, line items, incentive projection, resubmit | Live |
+| Catalogue, dealers & stores, schemes | Live |
+| **UPI / bank cashout** | **Mock UI.** It uses the real balance but sends nothing |
+| **Aadhaar OTP KYC** (intro, OTP, success) | **Mock UI.** Nothing leaves the phone, and KYC status is still set by admins |
+| GSTR-2B / ITC block on the retailer ledger, territory manager contact | Mock (`src/mocks/index.ts`) |
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Every mock is labelled in the app with a **Preview** banner or a "Preview" badge. All mock values live in [`src/mocks/index.ts`](src/mocks/index.ts).
+
+## Project structure
+
+```
+src/
+  app/                     Expo Router routes (thin: each screen file renders a feature component)
+    _layout.tsx            fonts, providers, auth guard (Stack.Protected: signed out / guest / plumber·retailer)
+    (auth)/                welcome, sign-in (phone + OTP)
+    (onboarding)/          role selection, registration
+    (app)/(tabs)/          Home · Rewards · History · Profile (+ centre Scan / Invoice action), role-aware
+    (app)/…                scan, invoice-upload, invoice/[id], redemptions, products, stores, cashout, kyc/*
+  features/                screens by area: plumber/, retailer/, shared/
+  components/              tab dock, preview banner, ui/ (Text, Button, Card, Badge, Field, OtpInput, Sheet…)
+  api/
+    schema.d.ts            generated from the API's OpenAPI document (npm run api:types)
+    client.ts              typed openapi-fetch client + TanStack Query hooks ($api), uploads
+    session.ts             OTP sign-in, rotating refresh token in SecureStore, guest → plumber/retailer
+    config.ts              API URL resolution (env → Expo host IP → localhost)
+  theme/tokens.ts          Levik Luxury design system (colours, type, radii, spacing, shadows)
+  lib/                     formatting (₹ lakh grouping), tiers, product images, file pickers
+  mocks/                   UI-only data for cashout, Aadhaar KYC and GST previews
+```
+
+### Conventions
+
+- **API types are generated, not hand-written.** After the API changes, run `npm run api:types` while it is running.
+- **Session tokens:**
+  - The access token is kept in memory only.
+  - The refresh token is kept in SecureStore (Keychain / Keystore), or localStorage on web.
+  - A 401 response triggers one refresh and a retry.
+- **Refreshing data:** after any mutation (scan, redemption, invoice), `refreshAll()` refetches the queries on screen, because points, balances and targets move together.
+- **Product photos** are bundled in `assets/products`. The API stores web paths, which `src/lib/product-image.ts` maps to the bundled files.
+- **Styling** uses the tokens in `src/theme/tokens.ts`. Gold is reserved for rewards and points, and emerald for verification, as the design system requires.
+
+## Scripts
+
+| Command | Purpose |
+| ------- | ------- |
+| `npx expo start` | Dev server (Expo Go, web, simulators) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npx expo lint` | ESLint (`eslint-config-expo`) |
+| `npm run api:types` | Regenerate `src/api/schema.d.ts` from the API |
+| `npx expo-doctor` | Check dependency and config health |
+
+## Not done yet
+
+- App icon and splash screen still use Expo's defaults. They need Levik brand assets.
+- Hindi and Gujarati language switching (the selector exists, but text is English only).
+- Push notifications, and production builds and store submission through EAS.
+- Backend endpoints for UPI/bank payouts and Aadhaar (UIDAI) KYC. Their screens are mock UI until then.
