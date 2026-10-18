@@ -2,6 +2,7 @@
 
 The Expo / React Native app for the **Levik Rewards Programme**, used by plumbers and retailers. It is built from the Stitch "Levik Luxury" designs and talks to the [Levik API](https://github.com/shubhamjoshi99899/levik_-backend).
 
+- **Everyone:** an **Explore** tab to browse products with the points each earns and the live schemes it counts towards, see which dealers have it in stock (dealers in your city first), and open a dealer to see everything they stock.
 - **Plumbers:**
   - Scan the QR label on a product. The API checks the label is genuine, then the scan goes to the admin team for approval.
   - Earn points, and track them in the passbook.
@@ -49,7 +50,7 @@ To test scanning, generate a label batch in the admin portal (**Product → QR l
 | QR scan → resolve label → submit scan (dealer, invoice no., site, photo) | Live |
 | Rewards marketplace, redeem, my redemptions, cancel | Live |
 | Invoice upload, line items, incentive projection, resubmit | Live |
-| Catalogue, dealers & stores, schemes | Live |
+| Explore: products × dealer stock (nearby first), dealer pages, schemes | Live (retailer-reported inventory) |
 | **UPI / bank cashout** | **Mock UI.** It uses the real balance but sends nothing |
 | **Aadhaar OTP KYC** (intro, OTP, success) | **Mock UI.** Nothing leaves the phone, and KYC status is still set by admins |
 | GSTR-2B / ITC block on the retailer ledger, territory manager contact | Mock (`src/mocks/index.ts`) |
@@ -64,9 +65,10 @@ src/
     _layout.tsx            fonts, providers, auth guard (Stack.Protected: signed out / guest / plumber·retailer)
     (auth)/                welcome, sign-in (phone + OTP)
     (onboarding)/          role selection, registration
-    (app)/(tabs)/          Home · Rewards · History · Profile (+ centre Scan / Invoice action), role-aware
-    (app)/…                scan, invoice-upload, invoice/[id], redemptions, products, stores, cashout, kyc/*
-  features/                screens by area: plumber/, retailer/, shared/
+    (app)/(tabs)/          Home · Explore · [Scan / Invoice] · Rewards · History, role-aware
+    (app)/…                profile (from the avatar), product/[id], dealer/[id], scan, invoice-upload, invoice/[id],
+                           redemptions, cashout, kyc/*
+  features/                screens by area: plumber/, retailer/, explore/, shared/
   components/              tab dock, preview banner, ui/ (Text, Button, Card, Badge, Field, OtpInput, Sheet…)
   api/
     schema.d.ts            generated from the API's OpenAPI document (npm run api:types)

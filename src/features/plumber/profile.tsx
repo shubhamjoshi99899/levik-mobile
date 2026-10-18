@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { $api, queryClient } from '@/api/client';
 import { signOut } from '@/api/session';
-import { DOCK_HEIGHT } from '@/components/tab-dock';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, HeroCard } from '@/components/ui/card';
@@ -37,7 +36,7 @@ export function PlumberProfile() {
   };
 
   return (
-    <Screen header={<AppHeader brand eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} bottomInset={DOCK_HEIGHT} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
+    <Screen header={<AppHeader back eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
       <Card style={styles.gap}>
         <View style={styles.identity}>
           <View style={styles.avatar}>
@@ -167,7 +166,7 @@ export function PlumberProfile() {
               </Text>
             ) : null}
           </View>
-          <Button title="Stores" size="sm" variant="outline" onPress={() => router.push('/stores')} />
+          <Button title="Dealers" size="sm" variant="outline" onPress={() => router.push({ pathname: '/explore', params: { view: 'dealers' } })} />
         </View>
       </Card>
 
@@ -206,7 +205,7 @@ export function PlumberProfile() {
       <Menu
         title="TRADE & OPERATIONS"
         items={[
-          { icon: 'inventory_2', title: 'Product Catalogue', detail: 'Models and scan points', onPress: () => router.push('/products') },
+          { icon: 'explore', title: 'Explore Products & Dealers', detail: 'Where to buy and what each model earns', onPress: () => router.push('/explore') },
           { icon: 'redeem', title: 'My Redemptions', detail: 'Reward requests and delivery', onPress: () => router.push('/redemptions') },
           { icon: 'group', title: 'My Work Crew & Helpers', detail: 'Registered assistants' },
           { icon: 'workspace_premium', title: 'Customer Warranty Cards', detail: 'Digital guarantee issuances' },

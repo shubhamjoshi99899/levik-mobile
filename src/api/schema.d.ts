@@ -1575,6 +1575,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/app/explore/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalogue with the caller's points per product and how many dealers have it in stock. */
+        get: operations["AppExploreController_products_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/explore/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One product: earnings, live schemes and the dealers stocking it (nearby first). */
+        get: operations["AppExploreController_product_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/explore/dealers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listed dealers with how many products each has in stock (nearby first). */
+        get: operations["AppExploreController_dealers_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/app/explore/dealers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One dealer and every product they have in stock, with what each earns the caller. */
+        get: operations["AppExploreController_dealer_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/support-tickets": {
         parameters: {
             query?: never;
@@ -2971,6 +3039,112 @@ export interface components {
         };
         ReportStockRequestDto: {
             quantity: number;
+        };
+        ExploreSchemeDto: {
+            id: string;
+            name: string;
+            /** @description One-time bonus on reaching the scheme target. */
+            incentivePoints: number;
+            /** @description Approved scans (plumbers) or ₹ of eligible sales (retailers). */
+            targetValue: number;
+            endDate: string;
+        };
+        ExploreEarningDto: {
+            /** @enum {string} */
+            basis: "per approved scan" | "per unit invoiced at MRP";
+            /** @description Points the caller earns from this product (0 if not reward-eligible). */
+            points: number;
+            /** @description Live schemes for the caller's role that count this product. */
+            schemes: components["schemas"]["ExploreSchemeDto"][];
+        };
+        ExploreProductDto: {
+            /** @enum {string} */
+            category: "One-Piece Western WC" | "Wall-Hung WC" | "Floor-Mounted EWC" | "Indian Pan" | "Half-Pedestal Basin" | "Pedestal Basin" | "Wall-Hung Basin" | "Countertop Basin" | "Urinal" | "Cistern" | "Kitchen Sink";
+            id: string;
+            name: string;
+            modelCode: string;
+            description: string;
+            dimensions?: string;
+            features: string[];
+            imageUrl?: string;
+            rewardEligible: boolean;
+            /** @description Approved, active dealers reporting this product in stock. */
+            dealersInStock: number;
+            earning: components["schemas"]["ExploreEarningDto"];
+        };
+        ExploreProductPageDto: {
+            items: components["schemas"]["ExploreProductDto"][];
+            total: number;
+            page: number;
+            pageSize: number;
+        };
+        ExploreDealerStockDto: {
+            /** @enum {string} */
+            stockLevel: "In Stock" | "Low Stock";
+            quantity: number;
+            updatedAt: string;
+            id: string;
+            shopName: string;
+            address: string;
+            city: string;
+            state: string;
+            mobile: string;
+            /** @description Dealer is in the caller's city ("nearby"). */
+            sameCity: boolean;
+        };
+        ExploreProductDetailDto: {
+            product: components["schemas"]["ExploreProductDto"];
+            /** @description Dealers with this product in stock — caller's city first, then most stock. */
+            dealers: components["schemas"]["ExploreDealerStockDto"][];
+            /** @description Caller's city used for "nearby" ordering. */
+            city?: string;
+        };
+        ExploreDealerSummaryDto: {
+            productsInStock: number;
+            id: string;
+            shopName: string;
+            address: string;
+            city: string;
+            state: string;
+            mobile: string;
+            /** @description Dealer is in the caller's city ("nearby"). */
+            sameCity: boolean;
+        };
+        ExploreDealerListDto: {
+            dealers: components["schemas"]["ExploreDealerSummaryDto"][];
+            city?: string;
+        };
+        ExploreDealerDto: {
+            id: string;
+            shopName: string;
+            address: string;
+            city: string;
+            state: string;
+            mobile: string;
+            /** @description Dealer is in the caller's city ("nearby"). */
+            sameCity: boolean;
+        };
+        ExploreDealerProductDto: {
+            /** @enum {string} */
+            category: "One-Piece Western WC" | "Wall-Hung WC" | "Floor-Mounted EWC" | "Indian Pan" | "Half-Pedestal Basin" | "Pedestal Basin" | "Wall-Hung Basin" | "Countertop Basin" | "Urinal" | "Cistern" | "Kitchen Sink";
+            /** @enum {string} */
+            stockLevel: "In Stock" | "Low Stock";
+            quantity: number;
+            id: string;
+            name: string;
+            modelCode: string;
+            description: string;
+            dimensions?: string;
+            features: string[];
+            imageUrl?: string;
+            rewardEligible: boolean;
+            /** @description Approved, active dealers reporting this product in stock. */
+            dealersInStock: number;
+            earning: components["schemas"]["ExploreEarningDto"];
+        };
+        ExploreDealerDetailDto: {
+            dealer: components["schemas"]["ExploreDealerDto"];
+            products: components["schemas"]["ExploreDealerProductDto"][];
         };
         TicketNoteResponseDto: {
             at: string;
@@ -5722,6 +5896,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InventoryItemResponseDto"];
+                };
+            };
+        };
+    };
+    AppExploreController_products_v1: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description Free-text search */
+                search?: string;
+                category?: "One-Piece Western WC" | "Wall-Hung WC" | "Floor-Mounted EWC" | "Indian Pan" | "Half-Pedestal Basin" | "Pedestal Basin" | "Wall-Hung Basin" | "Countertop Basin" | "Urinal" | "Cistern" | "Kitchen Sink";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExploreProductPageDto"];
+                };
+            };
+        };
+    };
+    AppExploreController_product_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExploreProductDetailDto"];
+                };
+            };
+        };
+    };
+    AppExploreController_dealers_v1: {
+        parameters: {
+            query?: {
+                /** @description Shop name, city or area. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExploreDealerListDto"];
+                };
+            };
+        };
+    };
+    AppExploreController_dealer_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExploreDealerDetailDto"];
                 };
             };
         };

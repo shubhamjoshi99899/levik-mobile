@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 import { $api, queryClient } from '@/api/client';
 import { signOut } from '@/api/session';
-import { DOCK_HEIGHT } from '@/components/tab-dock';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, HeroCard } from '@/components/ui/card';
@@ -32,7 +31,7 @@ export function RetailerProfile() {
   const call = (phone: string) => void Linking.openURL(`tel:${phone.replace(/\s/g, '')}`);
 
   return (
-    <Screen header={<AppHeader brand eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} bottomInset={DOCK_HEIGHT} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
+    <Screen header={<AppHeader back eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
       <Card style={styles.gap}>
         <View style={styles.row}>
           <View style={styles.shopIcon}>
@@ -159,8 +158,7 @@ export function RetailerProfile() {
       <Menu
         title="DEALER OPERATIONS & ACCOUNTS"
         items={[
-          { icon: 'inventory_2', title: 'Catalogue & Stock', detail: 'Models, scan points and reported stock', onPress: () => router.push('/products') },
-          { icon: 'storefront', title: 'Authorized Dealers', detail: 'Levik stores network', onPress: () => router.push('/stores') },
+          { icon: 'explore', title: 'Explore Products & Dealers', detail: 'Catalogue, incentives and dealer stock', onPress: () => router.push('/explore') },
           { icon: 'redeem', title: 'My Redemptions', detail: 'Reward requests and delivery', onPress: () => router.push('/redemptions') },
           { icon: 'badge', title: 'Store Staff & Counter Sales', detail: 'Counter staff scan logins' },
           { icon: 'receipt', title: 'Tax Invoices & Credit Notes', detail: 'Monthly GSTR-2B settlement archives' },

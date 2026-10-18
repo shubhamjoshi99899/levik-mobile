@@ -186,13 +186,13 @@ export function PlumberHome() {
           items={[
             { icon: 'qr_code_2', label: 'Scan Box', href: '/scan' },
             { icon: 'storefront', label: 'Rewards Store', href: '/rewards' },
-            { icon: 'pin_drop', label: 'Nearby Dealers', href: '/stores' },
+            { icon: 'pin_drop', label: 'Nearby Dealers', href: { pathname: '/explore', params: { view: 'dealers' } } },
             { icon: 'account_balance_wallet', label: 'Passbook', href: '/history' },
           ]}
         />
 
         {offer ? (
-          <Pressable accessibilityRole="button" onPress={() => router.push('/products')} style={styles.offer}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/explore')} style={styles.offer}>
             <View style={styles.offerIcon}>
               <Icon name="electric_bolt" size={26} color={colors.navy} />
             </View>

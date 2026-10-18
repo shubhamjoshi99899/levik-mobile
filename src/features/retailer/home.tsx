@@ -127,7 +127,7 @@ export function RetailerHome() {
         <QuickActions
           items={[
             { icon: 'receipt_long', label: 'Upload Invoice', href: '/invoice-upload', highlight: true },
-            { icon: 'inventory_2', label: 'Catalog & Stock', href: '/products' },
+            { icon: 'explore', label: 'Explore', href: '/explore' },
             { icon: 'redeem', label: 'Rewards', href: '/rewards' },
             { icon: 'account_balance_wallet', label: 'Sales Ledger', href: '/history' },
           ]}

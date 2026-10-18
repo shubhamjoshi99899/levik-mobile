@@ -5,7 +5,8 @@ import { TabDock } from '@/components/tab-dock';
 
 /**
  * Headless expo-router tabs (TabList is hidden; the custom dock renders the triggers) so the centre
- * scan action can sit between the tabs. Home/Profile render the plumber or retailer variant by role.
+ * scan action can sit between the tabs. Home and History render the plumber or retailer variant by role;
+ * Profile is a stack screen opened from the avatar in the top bar.
  */
 export default function TabsLayout() {
   const session = useSession();
@@ -15,9 +16,9 @@ export default function TabsLayout() {
       <TabSlot style={styles.fill} />
       <TabList style={styles.hidden}>
         <TabTrigger name="index" href="/" />
+        <TabTrigger name="explore" href="/explore" />
         <TabTrigger name="rewards" href="/rewards" />
         <TabTrigger name="history" href="/history" />
-        <TabTrigger name="profile" href="/profile" />
       </TabList>
       <TabDock role={role} />
     </Tabs>

@@ -36,8 +36,8 @@ export function TabDock({ role }: { role: 'plumber' | 'retailer' }): ReactNode {
         <TabTrigger name="index" href="/" asChild>
           <TabButton icon="home" label="Home" />
         </TabTrigger>
-        <TabTrigger name="rewards" href="/rewards" asChild>
-          <TabButton icon="workspace_premium" label="Rewards" />
+        <TabTrigger name="explore" href="/explore" asChild>
+          <TabButton icon="explore" label="Explore" />
         </TabTrigger>
         <View style={styles.centerSlot}>
           <Pressable accessibilityRole="button" accessibilityLabel={center.label} onPress={() => router.push(center.href)} style={({ pressed }) => [styles.centerBtn, pressed && { transform: [{ scale: 0.96 }] }]}>
@@ -47,11 +47,11 @@ export function TabDock({ role }: { role: 'plumber' | 'retailer' }): ReactNode {
             {center.label}
           </Text>
         </View>
+        <TabTrigger name="rewards" href="/rewards" asChild>
+          <TabButton icon="workspace_premium" label="Rewards" />
+        </TabTrigger>
         <TabTrigger name="history" href="/history" asChild>
           <TabButton icon="receipt_long" label="History" />
-        </TabTrigger>
-        <TabTrigger name="profile" href="/profile" asChild>
-          <TabButton icon="person" label="Profile" />
         </TabTrigger>
       </View>
     </View>
