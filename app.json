@@ -56,7 +56,11 @@
           "cameraPermission": "Levik Partner uses the camera to photograph invoices and installations.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

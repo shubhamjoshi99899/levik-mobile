@@ -15,6 +15,8 @@ The Expo / React Native app for the **Levik Rewards Programme**, used by plumber
 
 Requires Node.js 22+ and a running Levik API (default `http://localhost:4100`, seeded with `npm run db:seed`).
 
+The app targets **Expo SDK 57** (React Native 0.86), which matches the Expo Go version on the Play Store. Expo Go must match the project's SDK. If Expo Go says the project is incompatible, install the matching Expo Go from [expo.dev/go](https://expo.dev/go).
+
 ```bash
 npm install
 npx expo start

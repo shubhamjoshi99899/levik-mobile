@@ -28,8 +28,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-          {/* Plumbers and retailers */}
-          <Stack.Protected guard={role === 'plumber' || role === 'retailer'} redirectTo={role === 'guest' ? '/role' : '/welcome'}>
+          {/* Plumbers and retailers. A failed guard falls through to the first allowed group's anchor
+              (welcome for signed-out users, role selection for guests). */}
+          <Stack.Protected guard={role === 'plumber' || role === 'retailer'}>
             <Stack.Screen name="(app)" />
           </Stack.Protected>
           {/* Phone verified by OTP, not registered yet */}
