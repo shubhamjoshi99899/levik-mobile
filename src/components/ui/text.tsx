@@ -1,8 +1,8 @@
 import { Text as RNText, type TextProps } from 'react-native';
-import { colors, type as typeScale, type TypeVariant } from '@/theme/tokens';
+import { colors, MAX_FONT_SCALE, type as typeScale, type TypeVariant } from '@/theme/tokens';
 
 export function Text({ variant = 'body', color = colors.ink, style, ...props }: TextProps & { variant?: TypeVariant; color?: string }) {
-  return <RNText {...props} style={[typeScale[variant], { color }, style]} />;
+  return <RNText maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} style={[typeScale[variant], { color }, style]} />;
 }
 
 /** Tabular numbers keep point and rupee columns from jumping as values change. */

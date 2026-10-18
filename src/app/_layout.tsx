@@ -1,5 +1,5 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
-import { PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, useFonts } from '@expo-google-fonts/plus-jakarta-sans';
+import { InterTight_500Medium, InterTight_600SemiBold, useFonts } from '@expo-google-fonts/inter-tight';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,7 @@ import { colors } from '@/theme/tokens';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
+  const [fontsLoaded, fontError] = useFonts({ InterTight_500Medium, InterTight_600SemiBold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   const session = useSession();
   const ready = (fontsLoaded || Boolean(fontError)) && session.status !== 'loading';
 

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, radius, type as typeScale } from '@/theme/tokens';
+import { colors, MAX_FONT_SCALE, radius, type as typeScale } from '@/theme/tokens';
 import { Text } from './text';
 
 /** White input with a 1.5px ceramic border that turns navy with a soft ring on focus. */
@@ -24,6 +24,7 @@ export function Field({
       <View style={[styles.shell, focused && styles.focused, error ? styles.invalid : null]}>
         {prefix}
         <TextInput
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           placeholderTextColor={colors.faint}
           {...input}
           accessibilityLabel={input.accessibilityLabel ?? label}
@@ -54,8 +55,8 @@ export function Field({
 
 const styles = StyleSheet.create({
   wrap: { gap: 6 },
-  shell: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.lg },
+  shell: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.lg },
   focused: { borderColor: colors.navy, boxShadow: '0 0 0 3px rgba(11, 30, 61, 0.08)' },
   invalid: { borderColor: colors.error },
-  input: { flex: 1, ...typeScale.bodyLg, color: colors.ink, paddingVertical: 12, outlineStyle: 'none' } as never,
+  input: { flex: 1, ...typeScale.body, fontSize: 14, color: colors.ink, paddingVertical: 12, outlineStyle: 'none' } as never,
 });

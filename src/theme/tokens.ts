@@ -44,11 +44,15 @@ export const colors = {
   white: '#FFFFFF',
 } as const;
 
+/**
+ * Inter Tight (headings, numbers, labels) + Inter (body). Inter Tight is narrower and lighter than the
+ * original Plus Jakarta Sans, so headings stay crisp on dense Android screens without dominating.
+ */
 export const fonts = {
-  display: 'PlusJakartaSans_700Bold',
-  heading: 'PlusJakartaSans_600SemiBold',
-  label: 'PlusJakartaSans_600SemiBold',
-  labelBold: 'PlusJakartaSans_700Bold',
+  display: 'InterTight_600SemiBold',
+  heading: 'InterTight_600SemiBold',
+  label: 'InterTight_500Medium',
+  labelBold: 'InterTight_600SemiBold',
   body: 'Inter_400Regular',
   bodyMedium: 'Inter_500Medium',
   bodySemi: 'Inter_600SemiBold',
@@ -56,22 +60,28 @@ export const fonts = {
 
 type Variant = Pick<TextStyle, 'fontFamily' | 'fontSize' | 'lineHeight' | 'letterSpacing' | 'textTransform'>;
 
-/** Mobile typography scale (DESIGN.md *-mobile variants). Letter spacing converted from em to px. */
+/** Compact mobile type scale (about 15–20% below the Stitch web sizes, tuned on 360–400dp Android screens). */
 export const type = {
-  display: { fontFamily: fonts.display, fontSize: 38, lineHeight: 44, letterSpacing: -0.95 },
-  headlineXl: { fontFamily: fonts.display, fontSize: 30, lineHeight: 38, letterSpacing: -0.6 },
-  headlineLg: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 32, letterSpacing: -0.24 },
-  headlineMd: { fontFamily: fonts.heading, fontSize: 22, lineHeight: 28, letterSpacing: -0.22 },
-  headlineSm: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 24 },
-  currency: { fontFamily: fonts.display, fontSize: 36, lineHeight: 42, letterSpacing: -0.72 },
-  bodyXl: { fontFamily: fonts.body, fontSize: 18, lineHeight: 28 },
-  bodyLg: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
-  body: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
-  bodySm: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16 },
-  labelLg: { fontFamily: fonts.label, fontSize: 14, lineHeight: 20, letterSpacing: 0.28 },
-  labelMd: { fontFamily: fonts.label, fontSize: 12, lineHeight: 16, letterSpacing: 0.36 },
-  labelSm: { fontFamily: fonts.labelBold, fontSize: 10, lineHeight: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  display: { fontFamily: fonts.display, fontSize: 30, lineHeight: 36, letterSpacing: -0.6 },
+  headlineXl: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30, letterSpacing: -0.4 },
+  headlineLg: { fontFamily: fonts.heading, fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
+  headlineMd: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 24, letterSpacing: -0.15 },
+  headlineSm: { fontFamily: fonts.heading, fontSize: 15.5, lineHeight: 21, letterSpacing: -0.1 },
+  currency: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, letterSpacing: -0.5 },
+  bodyXl: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
+  bodyLg: { fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21 },
+  body: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
+  bodySm: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16 },
+  labelLg: { fontFamily: fonts.label, fontSize: 13, lineHeight: 18, letterSpacing: 0.1 },
+  labelMd: { fontFamily: fonts.label, fontSize: 11.5, lineHeight: 16, letterSpacing: 0.2 },
+  labelSm: { fontFamily: fonts.labelBold, fontSize: 9.5, lineHeight: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
 } satisfies Record<string, Variant>;
+
+/**
+ * Upper bound for the OS "font size" accessibility setting. Text still grows for users who need it,
+ * but a 1.3–1.5x Android setting no longer breaks cards, buttons and the tab dock.
+ */
+export const MAX_FONT_SCALE = 1.2;
 
 export type TypeVariant = keyof typeof type;
 
@@ -80,7 +90,7 @@ export const radius = { sm: 4, md: 8, lg: 12, card: 16, hero: 24, full: 9999 } a
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 40 } as const;
 
 /**
- * Elevation levels from DESIGN.md, tinted with midnight navy rather than black. React Native 0.88 renders
+ * Elevation levels from DESIGN.md, tinted with midnight navy rather than black. React Native 0.86+ renders
  * CSS `boxShadow` natively on iOS and Android (New Architecture), so one definition serves every platform.
  */
 export const shadows = {

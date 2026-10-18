@@ -31,7 +31,7 @@ export function Button({
   size?: 'lg' | 'md' | 'sm';
 }) {
   const fg = variant === 'primary' || variant === 'danger' ? colors.white : colors.navy;
-  const height = size === 'lg' ? 56 : size === 'md' ? touch : 36;
+  const height = size === 'lg' ? 52 : size === 'md' ? touch : 36;
   const inactive = disabled || loading;
   const content = (
     <View style={[styles.row, size !== 'lg' && styles.tight, { height, paddingHorizontal: size === 'lg' ? 20 : 12 }]}>
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   fill: { borderRadius: radius.card },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   tight: { gap: 6 },
-  lgLabel: { fontSize: 16 },
+  lgLabel: { fontSize: 15 },
   primary: { backgroundColor: colors.navy },
   outline: { borderWidth: 1.5, borderColor: 'rgba(74, 96, 122, 0.3)', backgroundColor: colors.surface },
   soft: { backgroundColor: colors.surfaceMid },
