@@ -1,0 +1,48 @@
+# Checks every push and pull request. On main, also publishes an over-the-air update to the "preview" channel,
+# so installed test APKs pick up JS/asset changes on their next launch without reinstalling.
+# Native changes (new native module, app.json plugins) change the fingerprint and need a new APK instead.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  update:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      # EXPO_PUBLIC_API_URL comes from the EAS "preview" environment, the same value the APK was built with.
+      - run: eas update --channel preview --environment preview --platform android --non-interactive --message "$COMMIT_MESSAGE"
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}

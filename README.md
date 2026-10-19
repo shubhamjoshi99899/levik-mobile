@@ -41,6 +41,10 @@ Sign in with OTP code **`123456`**. It only works for numbers listed in the API'
 
 To test scanning, generate a label batch in the admin portal (**Product → QR labels**), print the PDF, and scan a label with Expo Go. On web or a simulator, type the serial instead (Scan → Enter serial number).
 
+## Test APK and updates
+
+A hosted staging API lets testers use an installable Android APK without a local server. The APK is built once with EAS (`eas build --platform android --profile preview`). After that, every push to `main` that passes CI publishes an over-the-air update to the `preview` channel, which installed APKs load on their next launch. Native changes (new native modules, `app.json` plugins, SDK upgrades) need a new APK. See the API repo's [DEPLOYMENT.md](https://github.com/shubhamjoshi99899/levik_backend/blob/main/DEPLOYMENT.md) for the one-time setup.
+
 ## What is live and what is mock
 
 | Area | Data |
@@ -100,10 +104,11 @@ src/
 | `npx expo lint` | ESLint (`eslint-config-expo`) |
 | `npm run api:types` | Regenerate `src/api/schema.d.ts` from the API |
 | `npx expo-doctor` | Check dependency and config health |
+| `npx eas-cli@latest build -p android --profile preview` | Build an installable test APK against the staging API |
 
 ## Not done yet
 
 - App icon and splash screen still use Expo's defaults. They need Levik brand assets.
 - Hindi and Gujarati language switching (the selector exists, but text is English only).
-- Push notifications, and production builds and store submission through EAS.
+- Push notifications, and Play Store / App Store builds and submission (the `production` EAS profile exists but is unused).
 - Backend endpoints for UPI/bank payouts and Aadhaar (UIDAI) KYC. Their screens are mock UI until then.
