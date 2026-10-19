@@ -1,6 +1,7 @@
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { $api } from '@/api/client';
+import { $api, fileSource } from '@/api/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HeroCard } from '@/components/ui/card';
@@ -36,6 +37,9 @@ export function DealerDetailScreen() {
   return (
     <Screen header={<AppHeader back eyebrow="Authorized dealer" title={dealer.shopName} />} onRefresh={() => void refetch()} refreshing={isRefetching}>
       <HeroCard style={styles.gap}>
+        {dealer.shopPhotoUrl ? (
+          <Image source={fileSource(dealer.shopPhotoUrl)} style={styles.shopPhoto} contentFit="cover" accessibilityLabel={`${dealer.shopName} shop photo`} />
+        ) : null}
         <View style={styles.rowBetween}>
           <Badge label={`#${dealer.id}`} tone="soft" uppercase={false} />
           {dealer.sameCity ? <Badge label="Nearby" tone="gold" icon="near_me" uppercase={false} /> : null}
@@ -112,6 +116,7 @@ export function DealerDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  shopPhoto: { aspectRatio: 4 / 3, maxHeight: 220, borderRadius: radius.lg, backgroundColor: colors.navyRaised },
   flex: { flex: 1 },
   gap: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

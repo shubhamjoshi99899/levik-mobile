@@ -1,4 +1,6 @@
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { fileSource } from '@/api/client';
 import type { components } from '@/api/schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,9 +73,13 @@ export function DealerCard({
     // Plain container: the name row and "Stock" open the dealer; Call/Directions are separate buttons (no nesting).
     <View style={[styles.dealer, dealer.sameCity && styles.near]}>
       <Pressable accessibilityRole={onPress ? 'link' : undefined} disabled={!onPress} onPress={onPress} style={styles.row}>
-        <View style={[styles.dealerIcon, dealer.sameCity && { backgroundColor: colors.navy }]}>
-          <Icon name="storefront" color={dealer.sameCity ? colors.goldLight : colors.navy} />
-        </View>
+        {dealer.shopPhotoUrl ? (
+          <Image source={fileSource(dealer.shopPhotoUrl)} style={styles.dealerIcon} contentFit="cover" accessibilityLabel={`${dealer.shopName} shop photo`} />
+        ) : (
+          <View style={[styles.dealerIcon, dealer.sameCity && { backgroundColor: colors.navy }]}>
+            <Icon name="storefront" color={dealer.sameCity ? colors.goldLight : colors.navy} />
+          </View>
+        )}
         <View style={styles.flex}>
           <Text variant="labelLg" color={colors.inkStrong} numberOfLines={1}>
             {dealer.shopName}

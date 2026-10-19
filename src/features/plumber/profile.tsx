@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { $api, queryClient } from '@/api/client';
+import { $api, api, call, queryClient } from '@/api/client';
 import { signOut } from '@/api/session';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,16 @@ import { plumberTier } from '@/lib/tier';
 import { PAYOUT_ACCOUNTS, TERRITORY_MANAGER } from '@/mocks';
 import { colors, radius, space } from '@/theme/tokens';
 import { Menu } from '../shared/menu';
-import { initialsOf } from '../shared/parts';
+import { Avatar, usePhotoChange } from '../shared/photo';
 import { ProfileSkeleton } from '@/components/skeletons';
 
 export function PlumberProfile() {
   const router = useRouter();
   const me = $api.useQuery('get', '/api/v1/app/plumbers/me');
+  const photo = usePhotoChange('profile-photo', [1, 1], async (photoKey) => {
+    await call(api.PATCH('/api/v1/app/plumbers/me', { body: { photoKey } }));
+    await me.refetch();
+  });
   const loadError: unknown = me.error;
   if (me.isLoading)
     return (
@@ -45,16 +49,19 @@ export function PlumberProfile() {
     <Screen header={<AppHeader back eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
       <Card style={styles.gap}>
         <View style={styles.identity}>
-          <View style={styles.avatar}>
-            <Text variant="headlineLg" color={colors.goldLight}>
-              {initialsOf(p.name)}
-            </Text>
-            {verified ? (
-              <View style={styles.avatarBadge}>
-                <Icon name="verified" size={14} color={colors.white} />
-              </View>
-            ) : null}
-          </View>
+          <Avatar
+            url={p.photoUrl}
+            name={p.name}
+            busy={photo.busy}
+            onPress={photo.change}
+            badge={
+              verified ? (
+                <View style={styles.avatarBadge}>
+                  <Icon name="verified" size={14} color={colors.white} />
+                </View>
+              ) : null
+            }
+          />
           <View style={styles.flex}>
             <View style={styles.row}>
               <Badge label="Master plumber" tone="gold" icon="military_tech" />
@@ -68,6 +75,11 @@ export function PlumberProfile() {
             </Text>
           </View>
         </View>
+        {photo.error ? (
+          <Text variant="bodySm" color={colors.error}>
+            {photo.error}
+          </Text>
+        ) : null}
         <View style={styles.readiness}>
           <View style={styles.rowBetween}>
             <Text variant="labelMd" color={colors.slate}>
@@ -241,8 +253,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   identity: { flexDirection: 'row', gap: space.lg, alignItems: 'center' },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.goldLight },
-  avatarBadge: { position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.emerald, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surface },
+  avatarBadge: { position: 'absolute', right: -2, top: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.emerald, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surface },
   readiness: { gap: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.surfaceLow },
   walletTile: { flex: 1, gap: 2, padding: space.md, borderRadius: radius.lg, backgroundColor: 'rgba(0,0,0,0.2)' },
   kycRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.surfaceLow },

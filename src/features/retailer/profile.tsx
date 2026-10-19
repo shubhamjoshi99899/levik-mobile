@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Linking, StyleSheet, View } from 'react-native';
-import { $api, queryClient } from '@/api/client';
+import { Image } from 'expo-image';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { $api, api, call as request, fileSource, queryClient } from '@/api/client';
 import { signOut } from '@/api/session';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,12 +17,19 @@ import { retailerTier } from '@/lib/tier';
 import { TERRITORY_MANAGER } from '@/mocks';
 import { colors, radius, space } from '@/theme/tokens';
 import { Menu } from '../shared/menu';
+import { Avatar, usePhotoChange } from '../shared/photo';
 import { ProfileSkeleton } from '@/components/skeletons';
 
 export function RetailerProfile() {
   const router = useRouter();
   const me = $api.useQuery('get', '/api/v1/app/retailers/me');
   const schemes = $api.useQuery('get', '/api/v1/app/schemes');
+  const save = async (body: { photoKey?: string; shopPhotoKey?: string }) => {
+    await request(api.PATCH('/api/v1/app/retailers/me', { body }));
+    await me.refetch();
+  };
+  const ownerPhoto = usePhotoChange('profile-photo', [1, 1], (photoKey) => save({ photoKey }));
+  const shopPhoto = usePhotoChange('shop-photo', [4, 3], (shopPhotoKey) => save({ shopPhotoKey }));
   const loadError: unknown = me.error;
   if (me.isLoading)
     return (
@@ -39,10 +47,42 @@ export function RetailerProfile() {
   return (
     <Screen header={<AppHeader back eyebrow="Levik Luxury" title="Profile Account" right={<Badge label="EN" tone="neutral" icon="translate" />} />} onRefresh={() => void me.refetch()} refreshing={me.isRefetching}>
       <Card style={styles.gap}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={r.shopPhotoUrl ? 'Change shop photo' : 'Add shop photo'}
+          onPress={shopPhoto.change}
+          disabled={shopPhoto.busy}
+          style={styles.shopPhoto}
+        >
+          {r.shopPhotoUrl ? (
+            <Image source={fileSource(r.shopPhotoUrl)} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} />
+          ) : (
+            <View style={styles.shopEmpty}>
+              <Icon name="add_a_photo" size={28} color={colors.slate} />
+              <Text variant="labelLg" color={colors.inkStrong}>
+                Add a photo of your shop
+              </Text>
+              <Text variant="bodySm" color={colors.muted}>
+                Plumbers see it when choosing where they bought
+              </Text>
+            </View>
+          )}
+          {r.shopPhotoUrl ? (
+            <View style={styles.shopChange}>
+              <Icon name="photo_camera" size={16} color={colors.white} />
+              <Text variant="labelMd" color={colors.white}>
+                Change
+              </Text>
+            </View>
+          ) : null}
+          {shopPhoto.busy ? (
+            <View style={[StyleSheet.absoluteFill, styles.shopBusy]}>
+              <ActivityIndicator color={colors.white} />
+            </View>
+          ) : null}
+        </Pressable>
         <View style={styles.row}>
-          <View style={styles.shopIcon}>
-            <Icon name="storefront" size={30} color={colors.goldLight} />
-          </View>
+          <Avatar url={r.photoUrl} name={r.ownerName} size={64} busy={ownerPhoto.busy} onPress={ownerPhoto.change} />
           <View style={styles.flex}>
             <View style={styles.wrap}>
               <Badge label={tier.name} tone="gold" icon="diamond" uppercase={false} />
@@ -56,6 +96,11 @@ export function RetailerProfile() {
             </Text>
           </View>
         </View>
+        {shopPhoto.error || ownerPhoto.error ? (
+          <Text variant="bodySm" color={colors.error}>
+            {shopPhoto.error ?? ownerPhoto.error}
+          </Text>
+        ) : null}
         <View style={styles.line}>
           <Icon name="pin_drop" size={18} color={colors.slate} />
           <Text variant="body" color={colors.ink} style={styles.flex}>
@@ -186,7 +231,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
-  shopIcon: { width: 64, height: 64, borderRadius: radius.lg, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
+  shopPhoto: { aspectRatio: 4 / 3, maxHeight: 220, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceLow },
+  shopEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, padding: space.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border, borderRadius: radius.lg },
+  shopChange: { position: 'absolute', right: space.sm, bottom: space.sm, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space.sm, paddingVertical: 4, borderRadius: radius.full, backgroundColor: 'rgba(11,30,61,0.7)' },
+  shopBusy: { backgroundColor: 'rgba(11,30,61,0.55)', alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   gstin: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.surfaceLow },
   tile: { flex: 1, gap: 2, padding: space.md, borderRadius: radius.lg, backgroundColor: 'rgba(0,0,0,0.2)' },

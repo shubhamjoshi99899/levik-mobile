@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { $api } from '@/api/client';
+import { Image } from 'expo-image';
+import { $api, fileSource } from '@/api/client';
 import type { components } from '@/api/schema';
 import { Badge } from '@/components/ui/badge';
 import { Field } from '@/components/ui/field';
@@ -22,10 +23,13 @@ const initials = (name: string) =>
     .join('');
 
 /**
- * Shop "image": stores have no photos in the API yet, so each shop gets a branded navy tile with its
- * initials (gold for the plumber's registered dealer). Swap for a real photo when the API stores one.
+ * Shop image: the retailer's shop photo, or a branded tile with the shop's initials until they add one
+ * (gold for the plumber's registered dealer).
  */
-export function ShopImage({ name, primary = false, size = 52 }: { name: string; primary?: boolean; size?: number }) {
+export function ShopImage({ name, url, primary = false, size = 52 }: { name: string; url?: string; primary?: boolean; size?: number }) {
+  if (url) {
+    return <Image source={fileSource(url)} style={{ width: size, height: size, borderRadius: size / 4, backgroundColor: colors.surfaceMid }} contentFit="cover" accessibilityLabel={`${name} shop photo`} />;
+  }
   return (
     <LinearGradient colors={primary ? [colors.goldInk, colors.gold] : gradients.navy} style={[styles.shop, { width: size, height: size, borderRadius: size / 4 }]}>
       <Icon name="storefront" size={size * 0.3} color={primary ? colors.white : colors.goldLight} />
@@ -39,7 +43,7 @@ export function ShopImage({ name, primary = false, size = 52 }: { name: string; 
 function StoreRow({ store, primary, selected }: { store: Store; primary: boolean; selected: boolean }) {
   return (
     <View style={styles.storeRow}>
-      <ShopImage name={store.shopName} primary={primary} />
+      <ShopImage name={store.shopName} url={store.shopPhotoUrl} primary={primary} />
       <View style={styles.flex}>
         <Text variant="labelLg" color={colors.inkStrong} numberOfLines={2}>
           {store.shopName}

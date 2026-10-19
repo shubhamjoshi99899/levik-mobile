@@ -59,7 +59,7 @@ export function PlumberHome() {
 
   return (
     <View style={styles.flex}>
-      <HomeTopBar title="Home" initials={initialsOf(p.name)} />
+      <HomeTopBar title="Home" initials={initialsOf(p.name)} photoUrl={p.photoUrl} />
       <Screen onRefresh={() => void refetchAll()} refreshing={me.isRefetching} bottomInset={DOCK_HEIGHT}>
         <View style={styles.greeting}>
           {/* Greeting gets the full width; the verified mark sits right after the name (wraps with it). */}

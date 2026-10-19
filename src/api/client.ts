@@ -47,7 +47,7 @@ export async function call<T>(request: Promise<{ data?: T }>): Promise<T> {
 /** After a mutation (scan, redemption, invoice), refetch everything on screen: balances move together. */
 export const refreshAll = () => queryClient.invalidateQueries();
 
-export type UploadPurpose = 'scan-photo' | 'invoice-document';
+export type UploadPurpose = 'scan-photo' | 'invoice-document' | 'profile-photo' | 'shop-photo';
 
 /** Picked file from expo-image-picker / expo-document-picker (web assets also carry a File). */
 export interface PickedFile {
@@ -57,7 +57,12 @@ export interface PickedFile {
   file?: File;
 }
 
-/** Multipart upload (photo or invoice document). Returns the upload key to reference in a scan or invoice. */
+/** Signed file links from the API (photoUrl, shopPhotoUrl…) are relative to its origin; this makes them loadable by <Image>. */
+export function fileSource(url?: string | null): string | undefined {
+  return url ? `${API_URL}${url}` : undefined;
+}
+
+/** Multipart upload (photo or invoice document). Returns the upload key to reference in a scan, invoice or profile. */
 export async function uploadFile(file: PickedFile, purpose: UploadPurpose): Promise<string> {
   const form = new FormData();
   form.append('purpose', purpose);

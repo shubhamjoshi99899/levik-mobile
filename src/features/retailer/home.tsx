@@ -51,7 +51,7 @@ export function RetailerHome() {
 
   return (
     <View style={styles.flex}>
-      <HomeTopBar title="Home" initials={initialsOf(r.ownerName)} />
+      <HomeTopBar title="Home" initials={initialsOf(r.ownerName)} photoUrl={r.photoUrl} />
       <Screen bottomInset={DOCK_HEIGHT} onRefresh={() => void refreshAll()} refreshing={me.isRefetching}>
         <View style={styles.rowBetween}>
           <View style={styles.row}>

@@ -118,6 +118,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/files/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["FilesController_open_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/admin/login": {
         parameters: {
             query?: never;
@@ -1962,13 +1978,19 @@ export interface components {
         };
         UploadRequestDto: {
             /** @enum {string} */
-            purpose: "scan-photo" | "invoice-document" | "product-image";
-            /** Format: binary */
-            file: string;
+            purpose: "scan-photo" | "invoice-document" | "product-image" | "profile-photo" | "shop-photo";
+            /**
+             * Format: binary
+             * @description Documents the multipart part for Swagger. Multer hands the file to @UploadedFile(), not the body, but class
+             *     fields still create the property, so it needs a validator or forbidNonWhitelisted rejects every upload.
+             */
+            file?: string;
         };
         UploadResponseDto: {
-            /** @description Reference this key when submitting a scan (photoKey) or invoice (documentKey). */
+            /** @description The image/file ID. Reference it when submitting a scan (photoKey), an invoice (documentKey) or a profile/shop photo. */
             key: string;
+            /** @description Signed link to view the file, relative to the API origin. */
+            url: string;
             contentType: string;
             sizeBytes: number;
         };
@@ -2244,6 +2266,8 @@ export interface components {
             pincode: string;
             registeredAt: string;
             aadhaarMasked?: string;
+            /** @description Signed link to the profile photo, relative to the API origin. */
+            photoUrl?: string;
             experienceYears: number;
             specialization: string;
             preferredRetailer?: components["schemas"]["RetailerRefDto"];
@@ -2277,6 +2301,8 @@ export interface components {
             pincode: string;
             registeredAt: string;
             aadhaarMasked?: string;
+            /** @description Signed link to the profile photo, relative to the API origin. */
+            photoUrl?: string;
             experienceYears: number;
             specialization: string;
             preferredRetailer?: components["schemas"]["RetailerRefDto"];
@@ -2310,6 +2336,8 @@ export interface components {
             pincode: string;
             registeredAt: string;
             aadhaarMasked?: string;
+            /** @description Signed link to the profile photo, relative to the API origin. */
+            photoUrl?: string;
             experienceYears: number;
             specialization: string;
             preferredRetailer?: components["schemas"]["RetailerRefDto"];
@@ -2340,6 +2368,8 @@ export interface components {
         UpdateMyPlumberProfileRequestDto: {
             /** Format: email */
             email?: string | null;
+            /** @description Upload key from POST /uploads (purpose profile-photo); null removes the photo. */
+            photoKey?: string | null;
             city?: string;
             state?: string;
             pincode?: string;
@@ -2372,6 +2402,9 @@ export interface components {
             registeredAt: string;
             monthlyTarget: number;
             rejectionReason?: string;
+            /** @description Signed links to the owner's profile photo and the shop front photo, relative to the API origin. */
+            photoUrl?: string;
+            shopPhotoUrl?: string;
             lastLoginAt?: string;
         };
         RetailerPageResponseDto: {
@@ -2401,6 +2434,9 @@ export interface components {
             registeredAt: string;
             monthlyTarget: number;
             rejectionReason?: string;
+            /** @description Signed links to the owner's profile photo and the shop front photo, relative to the API origin. */
+            photoUrl?: string;
+            shopPhotoUrl?: string;
             lastLoginAt?: string;
         };
         UpdateRetailerRequestDto: {
@@ -2434,6 +2470,9 @@ export interface components {
             registeredAt: string;
             monthlyTarget: number;
             rejectionReason?: string;
+            /** @description Signed links to the owner's profile photo and the shop front photo, relative to the API origin. */
+            photoUrl?: string;
+            shopPhotoUrl?: string;
             lastLoginAt?: string;
         };
         ReviewRetailerRequestDto: {
@@ -2462,6 +2501,10 @@ export interface components {
             /** Format: email */
             email?: string | null;
             address?: string;
+            /** @description Upload key from POST /uploads (purpose profile-photo); null removes the photo. */
+            photoKey?: string | null;
+            /** @description Upload key from POST /uploads (purpose shop-photo); null removes the photo. */
+            shopPhotoKey?: string | null;
         };
         StoreResponseDto: {
             id: string;
@@ -2470,6 +2513,8 @@ export interface components {
             city: string;
             state: string;
             mobile: string;
+            /** @description Signed link to the shop front photo, relative to the API origin. */
+            shopPhotoUrl?: string;
         };
         StorePageResponseDto: {
             items: components["schemas"]["StoreResponseDto"][];
@@ -2601,6 +2646,8 @@ export interface components {
             invoiceDate: string;
             submittedAt: string;
             documentKey?: string;
+            /** @description Signed link to the invoice document, relative to the API origin. */
+            documentUrl?: string;
             reviewer?: string;
             reviewedAt?: string;
             incentivePoints?: number;
@@ -2639,6 +2686,8 @@ export interface components {
             invoiceDate: string;
             submittedAt: string;
             documentKey?: string;
+            /** @description Signed link to the invoice document, relative to the API origin. */
+            documentUrl?: string;
             reviewer?: string;
             reviewedAt?: string;
             incentivePoints?: number;
@@ -2779,6 +2828,8 @@ export interface components {
             invoiceNumber?: string;
             siteLocation: string;
             photoKey?: string;
+            /** @description Signed link to the installation photo, relative to the API origin. */
+            photoUrl?: string;
             expectedPoints: number;
             awardedPoints?: number;
             ledgerTxnId?: string;
@@ -3089,6 +3140,8 @@ export interface components {
             city: string;
             state: string;
             mobile: string;
+            /** @description Signed link to the shop front photo, relative to the API origin. */
+            shopPhotoUrl?: string;
             /** @description Dealer is in the caller's city ("nearby"). */
             sameCity: boolean;
         };
@@ -3107,6 +3160,8 @@ export interface components {
             city: string;
             state: string;
             mobile: string;
+            /** @description Signed link to the shop front photo, relative to the API origin. */
+            shopPhotoUrl?: string;
             /** @description Dealer is in the caller's city ("nearby"). */
             sameCity: boolean;
         };
@@ -3121,6 +3176,8 @@ export interface components {
             city: string;
             state: string;
             mobile: string;
+            /** @description Signed link to the shop front photo, relative to the API origin. */
+            shopPhotoUrl?: string;
             /** @description Dealer is in the caller's city ("nearby"). */
             sameCity: boolean;
         };
@@ -3478,6 +3535,28 @@ export interface operations {
     UploadsController_open_v1: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FilesController_open_v1: {
+        parameters: {
+            query: {
+                exp: number;
+                sig: string;
+            };
             header?: never;
             path: {
                 key: string;

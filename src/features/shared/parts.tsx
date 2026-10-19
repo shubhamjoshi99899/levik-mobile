@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fileSource } from '@/api/client';
 import { BrandMark } from '@/components/ui/brand-mark';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -19,8 +20,8 @@ export function ProductThumb({ imageUrl, size = 56, label }: { imageUrl?: string
   );
 }
 
-/** "LEVIK / SANITARYWARE Home" bar with notifications and the user's initials. */
-export function HomeTopBar({ title, initials }: { title: string; initials: string }) {
+/** "LEVIK / SANITARYWARE Home" bar with notifications and the user's photo (initials until one is set). */
+export function HomeTopBar({ title, initials, photoUrl }: { title: string; initials: string; photoUrl?: string }) {
   const router = useRouter();
   return (
     <SafeAreaView edges={['top']} style={styles.topSafe}>
@@ -39,9 +40,13 @@ export function HomeTopBar({ title, initials }: { title: string; initials: strin
           <View style={styles.bellDot} />
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/profile')} style={styles.avatar}>
-          <Text variant="labelLg" color={colors.goldLight}>
-            {initials}
-          </Text>
+          {photoUrl ? (
+            <Image source={fileSource(photoUrl)} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <Text variant="labelLg" color={colors.goldLight}>
+              {initials}
+            </Text>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
@@ -185,7 +190,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.md },
   bell: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   bellDot: { position: 'absolute', top: 8, right: 9, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold, borderWidth: 1.5, borderColor: colors.surface },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.goldLight },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.goldLight, overflow: 'hidden' },
   quick: { flexDirection: 'row', gap: space.sm },
   quickItem: { flex: 1, alignItems: 'center', gap: space.sm, paddingVertical: space.lg, paddingHorizontal: 4, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.card },
   quickIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.surfaceMid, alignItems: 'center', justifyContent: 'center' },
