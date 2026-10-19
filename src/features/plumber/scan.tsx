@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'ex
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useIsFocused } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { $api, api, call, refreshAll, uploadFile, type PickedFile } from '@/api/client';
@@ -14,11 +14,11 @@ import { Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { AppHeader } from '@/components/ui/screen';
-import { Chips } from '@/components/ui/segmented';
 import { Text } from '@/components/ui/text';
 import { formatNumber } from '@/lib/format';
 import { colors, radius, space } from '@/theme/tokens';
 import { ProductThumb } from '../shared/parts';
+import { DealerPicker } from './dealer-picker';
 
 type Resolved = components['schemas']['ResolvedLabelResponseDto'];
 type SubmittedScan = components['schemas']['AppScanResponseDto'];
@@ -36,6 +36,9 @@ export function ScanScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<SubmittedScan | null>(null);
   const lock = useRef(false);
+  const scroller = useRef<ScrollView>(null);
+  // The scanner disappears once a label resolves, so start the product details from the top.
+  useEffect(() => scroller.current?.scrollTo({ y: 0, animated: false }), [resolved, submitted]);
 
   const check = async (raw: string) => {
     if (lock.current) return;
@@ -71,7 +74,8 @@ export function ScanScreen() {
       <SafeAreaView edges={['top']} style={styles.headerSafe}>
         <AppHeader back brand title="Scan QR" />
       </SafeAreaView>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {resolved || submitted ? null : (
         <View style={styles.viewport}>
           {cameraLive ? (
             <CameraView style={StyleSheet.absoluteFill} facing="back" enableTorch={torch} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={checking ? undefined : onBarcode} />
@@ -121,8 +125,9 @@ export function ScanScreen() {
             <Icon name={manualOpen ? 'expand_less' : 'expand_more'} color={colors.white} />
           </Pressable>
         </View>
+        )}
 
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, (resolved || submitted) && styles.sheetFlat]}>
           {manualOpen && !resolved ? (
             <Card style={styles.gap}>
               <Text variant="labelLg" color={colors.inkStrong}>
@@ -176,13 +181,16 @@ export function ScanScreen() {
 
 function ResultCard({ code, resolved, onDone, onAgain }: { code: string; resolved: Resolved; onDone: (scan: SubmittedScan) => void; onAgain: () => void }) {
   const genuine = resolved.status === 'Available' && resolved.signatureValid !== false;
-  const [retailerId, setRetailerId] = useState<string | undefined>();
+  // undefined = not chosen yet (defaults to the plumber's registered dealer), null = "No dealer".
+  const [choice, setChoice] = useState<string | null | undefined>(undefined);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [site, setSite] = useState('');
   const [photo, setPhoto] = useState<PickedFile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { data: stores } = $api.useQuery('get', '/api/v1/app/stores', { params: { query: { pageSize: 20 } } }, { enabled: genuine });
+  const { data: me } = $api.useQuery('get', '/api/v1/app/plumbers/me', {}, { enabled: genuine });
+  const primaryId = me?.preferredRetailer?.id;
+  const retailerId = choice === undefined ? primaryId : (choice ?? undefined);
 
   const takePhoto = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -292,7 +300,7 @@ function ResultCard({ code, resolved, onDone, onAgain }: { code: string; resolve
           <Text variant="bodySm" color={colors.muted}>
             Choose the dealer you bought from. Scans with a dealer and invoice number are verified faster.
           </Text>
-          <Chips value={retailerId ?? ''} onChange={(id) => setRetailerId(id || undefined)} options={[{ value: '', label: 'No dealer' }, ...(stores?.items ?? []).map((s) => ({ value: s.id, label: s.shopName }))]} />
+          <DealerPicker value={retailerId} primaryId={primaryId} onChange={(id) => setChoice(id ?? null)} />
           <Field label="Invoice number (optional)" value={invoiceNumber} onChangeText={setInvoiceNumber} placeholder="SSS/25-26/0431" autoCapitalize="characters" />
           <Field label="Installation site (optional)" value={site} onChangeText={setSite} placeholder="Raja Park, Jaipur" />
           <Pressable accessibilityRole="button" onPress={() => void takePhoto()} style={styles.photo}>
@@ -360,6 +368,7 @@ const styles = StyleSheet.create({
   permission: { alignItems: 'center', gap: space.md, paddingHorizontal: space.xl },
   hint: { marginHorizontal: space.xl, paddingHorizontal: space.lg, paddingVertical: space.sm, borderRadius: radius.full, backgroundColor: 'rgba(11,30,61,0.7)' },
   manualToggle: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg, height: 48, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.14)' },
+  sheetFlat: { marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   sheet: { padding: space.lg, gap: space.lg, marginTop: -space.lg, borderTopLeftRadius: radius.hero, borderTopRightRadius: radius.hero, backgroundColor: colors.background },
   gap: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
