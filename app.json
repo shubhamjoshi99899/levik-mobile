@@ -68,6 +68,15 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "17aedb8c-d8d5-4b6c-abe1-5f4448038992"
+      }
+    },
+    "owner": "shubhamjoshi99899",
+    "updates": {
+      "url": "https://u.expo.dev/17aedb8c-d8d5-4b6c-abe1-5f4448038992"
     }
   }
 }
