@@ -1,7 +1,8 @@
 import type { ImageSource } from 'expo-image';
+import { fileSource } from '@/api/client';
 
 /**
- * Product photos are bundled with the app (the API stores web paths like /images/products/1012.jpg that the
+ * Catalogue photos are bundled with the app (the API stores web paths like /images/products/1012.jpg that the
  * admin portal serves). Map the file name to the bundled asset.
  */
 const PRODUCT_IMAGES: Record<string, ImageSource> = {
@@ -28,7 +29,13 @@ const PRODUCT_IMAGES: Record<string, ImageSource> = {
   'urinal-flat-back.jpg': require('@/assets/products/urinal-flat-back.jpg'),
 };
 
+/**
+ * Bundled catalogue photo by file name; otherwise an image uploaded in the admin, which the API returns as a
+ * signed link relative to its origin ("/api/v1/files/…"), or an absolute URL.
+ */
 export function productImage(imageUrl?: string | null): ImageSource | undefined {
   if (!imageUrl) return undefined;
+  if (imageUrl.startsWith('/api/')) return { uri: fileSource(imageUrl) };
+  if (/^https?:\/\//i.test(imageUrl)) return { uri: imageUrl };
   return PRODUCT_IMAGES[imageUrl.split('/').pop() ?? ''];
 }
