@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { File as FsFile } from 'expo-file-system';
 import createFetchClient, { type Middleware } from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
 import { Platform } from 'react-native';
@@ -70,8 +71,9 @@ export async function uploadFile(file: PickedFile, purpose: UploadPurpose): Prom
     const blob = file.file ?? (await (await fetch(file.uri)).blob());
     form.append('file', blob, file.name);
   } else {
-    // React Native's FormData accepts a { uri, name, type } descriptor for local files.
-    form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
+    // Expo's fetch (the global fetch since SDK 57) cannot send React Native's { uri, name, type } parts
+    // ("Unsupported FormDataPart implementation"). expo-file-system's File is a Blob it reads from disk.
+    form.append('file', new FsFile(file.uri) as unknown as Blob, file.name);
   }
   const res = await authFetch(new Request(`${API_URL}/api/v1/uploads`, { method: 'POST', body: form }));
   if (!res.ok) throw await ApiError.fromResponse(res);

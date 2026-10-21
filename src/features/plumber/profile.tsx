@@ -18,6 +18,7 @@ import { colors, radius, space } from '@/theme/tokens';
 import { Menu } from '../shared/menu';
 import { Avatar, usePhotoChange } from '../shared/photo';
 import { ProfileSkeleton } from '@/components/skeletons';
+import { appVersionLabel } from '@/lib/updates';
 
 export function PlumberProfile() {
   const router = useRouter();
@@ -241,7 +242,7 @@ export function PlumberProfile() {
 
       <Button title="Log Out of Partner App" icon="logout" variant="outline" onPress={() => void logout()} />
       <Text variant="bodySm" color={colors.faint} style={styles.version}>
-        Levik Partner App • v{Constants.expoConfig?.version ?? '1.0.0'}
+        Levik Partner App • {appVersionLabel(Constants.expoConfig?.version ?? '1.0.0')}
       </Text>
     </Screen>
   );

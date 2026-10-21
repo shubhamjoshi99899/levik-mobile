@@ -8,10 +8,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '@/api/client';
 import { useSession } from '@/api/session';
 import { colors } from '@/theme/tokens';
+import { useApplyUpdateOnLaunch } from '@/lib/updates';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  useApplyUpdateOnLaunch();
   const [fontsLoaded, fontError] = useFonts({ InterTight_500Medium, InterTight_600SemiBold, Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
   const session = useSession();
   const ready = (fontsLoaded || Boolean(fontError)) && session.status !== 'loading';
