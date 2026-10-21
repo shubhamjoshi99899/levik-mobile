@@ -21,6 +21,9 @@ import { ProductThumb } from '../shared/parts';
 import { DealerPicker } from './dealer-picker';
 
 type Resolved = components['schemas']['ResolvedLabelResponseDto'];
+
+/** A rejected QR is checked again only after it has been out of the camera's view for this long. */
+const RESCAN_AFTER_MS = 2500;
 type SubmittedScan = components['schemas']['AppScanResponseDto'];
 
 /** Camera (or typed serial) → API label check → proof of sale → submit for admin verification. */
@@ -36,6 +39,9 @@ export function ScanScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<SubmittedScan | null>(null);
   const lock = useRef(false);
+  // The camera reports the same QR many times a second while it stays in view. After a failed check, ignore
+  // that code until it has been out of view for a moment, so one bad label does not loop requests to the API.
+  const rejected = useRef<{ code: string; seenAt: number } | null>(null);
   const scroller = useRef<ScrollView>(null);
   // The scanner disappears once a label resolves, so start the product details from the top.
   useEffect(() => scroller.current?.scrollTo({ y: 0, animated: false }), [resolved, submitted]);
@@ -51,6 +57,7 @@ export function ScanScreen() {
       setResolved(result);
     } catch (e) {
       setError(errorMessage(e));
+      rejected.current = { code: raw, seenAt: Date.now() };
       lock.current = false;
     } finally {
       setChecking(false);
@@ -59,6 +66,7 @@ export function ScanScreen() {
 
   const reset = () => {
     lock.current = false;
+    rejected.current = null;
     setCode(null);
     setResolved(null);
     setSubmitted(null);
@@ -66,7 +74,14 @@ export function ScanScreen() {
     setManual('');
   };
 
-  const onBarcode = (result: BarcodeScanningResult) => void check(result.data);
+  const onBarcode = (result: BarcodeScanningResult) => {
+    const last = rejected.current;
+    if (last && last.code === result.data && Date.now() - last.seenAt < RESCAN_AFTER_MS) {
+      last.seenAt = Date.now(); // still in view: keep ignoring it
+      return;
+    }
+    void check(result.data);
+  };
   const cameraLive = focused && !resolved && Boolean(permission?.granted);
 
   return (
