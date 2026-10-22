@@ -353,10 +353,12 @@ function Submitted({ scan, onAgain }: { scan: SubmittedScan; onAgain: () => void
         <Icon name="task_alt" size={36} color={colors.emeraldDeep} />
       </View>
       <Text variant="headlineMd" color={colors.inkStrong} style={styles.center}>
-        Submitted for verification
+        {scan.awaitingRetailer ? `Sent to ${scan.retailerName} to confirm` : 'Submitted for verification'}
       </Text>
       <Text variant="body" color={colors.muted} style={styles.center}>
-        {scan.productName} ({scan.id}). +{formatNumber(scan.points)} pts will be credited once the Levik team approves the scan.
+        {scan.awaitingRetailer
+          ? `${scan.productName} (${scan.id}). +${formatNumber(scan.points)} pts are credited as soon as ${scan.retailerName} confirms they sold it to you.`
+          : `${scan.productName} (${scan.id}). +${formatNumber(scan.points)} pts will be credited once the Levik team approves the scan.`}
       </Text>
       <Button title="Scan Another Carton" icon="qr_code_scanner" onPress={onAgain} />
     </Card>

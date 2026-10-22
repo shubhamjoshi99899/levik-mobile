@@ -25,11 +25,12 @@ function TabButton({ isFocused, icon, label, ref, ...props }: TabTriggerSlotProp
   );
 }
 
-/** Solid bottom dock with a raised, gold-ringed centre action (scan for plumbers, invoice upload for retailers). */
+/** Solid bottom dock with a raised, gold-ringed centre action (scan for plumbers, sales to confirm for retailers). */
 export function TabDock({ role }: { role: 'plumber' | 'retailer' }): ReactNode {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const center = role === 'plumber' ? { icon: 'qr_code_scanner', label: 'Scan', href: '/scan' as const } : { icon: 'upload_file', label: 'Invoice', href: '/invoice-upload' as const };
+  // Retailers: confirming plumber sales is the everyday action (stock, incentive and bill in one step).
+  const center = role === 'plumber' ? { icon: 'qr_code_scanner', label: 'Scan', href: '/scan' as const } : { icon: 'point_of_sale', label: 'Sales', href: '/sales' as const };
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       <View style={styles.row}>

@@ -8,6 +8,9 @@ The Expo / React Native app for the **Levik Rewards Programme**, used by plumber
   - Earn points, and track them in the passbook.
   - Redeem rewards, follow schemes, and find dealers.
 - **Retailers:**
+  - Order stock from the Levik catalogue and track orders through to delivery; delivered orders add stock and come with a purchase invoice (PDF).
+  - Confirm (or decline) the purchases plumbers report from their shop: stock goes down, the retailer earns an incentive, the plumber is credited, and a bill for the buyer (store header, Levik mark) can be issued in the same step. Walk-in customers can be billed too.
+  - See stock per product with its full history; correct a count by hand when the shelf differs.
   - Upload GST invoices (photo or PDF) with their line items, and see the incentive the API calculates.
   - Track the monthly sales target, the incentive ledger and schemes.
   - Redeem rewards.

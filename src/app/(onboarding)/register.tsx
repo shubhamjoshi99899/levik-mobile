@@ -1,7 +1,8 @@
+import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { $api, api, call, queryClient } from '@/api/client';
+import { $api, api, call, queryClient, uploadFile, type UploadPurpose } from '@/api/client';
 import { errorMessage } from '@/api/errors';
 import { acceptTokens, useSession } from '@/api/session';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { AppHeader, Screen } from '@/components/ui/screen';
 import { Chips } from '@/components/ui/segmented';
 import { Text } from '@/components/ui/text';
 import { maskMobile } from '@/lib/format';
+import { pickDocument, pickPhoto } from '@/lib/pick-file';
 import { colors, radius, space } from '@/theme/tokens';
 
 const STATES = ['Rajasthan', 'Gujarat', 'Uttar Pradesh', 'Madhya Pradesh', 'Maharashtra', 'Haryana', 'Delhi', 'Punjab'];
@@ -35,6 +37,12 @@ export default function Register() {
   const [experience, setExperience] = useState('');
   const [specialization, setSpecialization] = useState('');
   const [gstin, setGstin] = useState('');
+  const [email, setEmail] = useState('');
+  const [pan, setPan] = useState('');
+  // Onboarding documents upload as soon as they are picked (as the guest) and move to the shop on registration.
+  const [shopPhoto, setShopPhoto] = useState<{ key: string; uri: string } | null>(null);
+  const [gstCertificate, setGstCertificate] = useState<{ key: string; name: string } | null>(null);
+  const [uploading, setUploading] = useState<UploadPurpose | null>(null);
   const [dealerId, setDealerId] = useState<string | undefined>();
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
@@ -49,7 +57,9 @@ export default function Register() {
     if (!isPlumber && shopName.trim().length < 3) e.shopName = 'Enter the shop name.';
     if (!isPlumber && address.trim().length < 5) e.address = 'Enter the shop address.';
     if (city.trim().length < 2) e.city = 'Enter your city.';
-    if (isPlumber && !/^\d{6}$/.test(pincode)) e.pincode = 'PIN code must be 6 digits.';
+    if (!/^[1-9]\d{5}$/.test(pincode)) e.pincode = 'PIN code must be 6 digits.';
+    if (!isPlumber && email && !/^\S+@\S+\.\S+$/.test(email.trim())) e.email = 'Enter a valid email, or leave it empty.';
+    if (!isPlumber && pan && !/^[A-Z]{5}\d{4}[A-Z]$/.test(pan)) e.pan = 'Enter a valid 10-character PAN, or leave it empty.';
     if (!isPlumber && gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin.toUpperCase())) e.gstin = 'Enter a valid 15-character GSTIN, or leave it empty.';
     if (isPlumber && experience && !/^\d{1,2}$/.test(experience)) e.experience = 'Years of experience, e.g. 6.';
     if (!consent) e.consent = 'Please accept to continue.';
@@ -79,7 +89,19 @@ export default function Register() {
           )
         : await call(
             api.POST('/api/v1/app/retailers/register', {
-              body: { shopName: shopName.trim(), ownerName: name.trim(), address: address.trim(), city: city.trim(), state, gstin: gstin.trim().toUpperCase() || undefined },
+              body: {
+                shopName: shopName.trim(),
+                ownerName: name.trim(),
+                address: address.trim(),
+                city: city.trim(),
+                state,
+                pincode,
+                gstin: gstin.trim().toUpperCase() || undefined,
+                email: email.trim() || undefined,
+                pan: pan || undefined,
+                shopPhotoKey: shopPhoto?.key,
+                gstCertificateKey: gstCertificate?.key,
+              },
             }),
           );
       queryClient.clear();
@@ -95,7 +117,7 @@ export default function Register() {
       header={<AppHeader back eyebrow="Levik Luxury" title={isPlumber ? 'Business Verification' : 'Dealer Registration'} />}
       footer={
         <View style={styles.footer}>
-          <Button title="Activate Account & Enter App" icon="auto_awesome" onPress={submit} loading={busy} />
+          <Button title="Activate Account & Enter App" icon="auto_awesome" onPress={submit} loading={busy} disabled={uploading !== null} />
         </View>
       }
     >
@@ -150,11 +172,9 @@ export default function Register() {
           <View style={styles.flex}>
             <Field label="City" value={city} onChangeText={setCity} placeholder="Jaipur" autoComplete="postal-address-locality" error={errors.city} />
           </View>
-          {isPlumber ? (
-            <View style={styles.flex}>
-              <Field label="PIN code" value={pincode} onChangeText={(t) => setPincode(t.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" placeholder="302001" error={errors.pincode} />
-            </View>
-          ) : null}
+          <View style={styles.flex}>
+            <Field label="PIN code" value={pincode} onChangeText={(t) => setPincode(t.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" placeholder="302001" error={errors.pincode} />
+          </View>
         </View>
         {isPlumber ? (
           <View style={styles.row}>
@@ -166,9 +186,94 @@ export default function Register() {
             </View>
           </View>
         ) : (
-          <Field label="GSTIN (optional)" value={gstin} onChangeText={(t) => setGstin(t.toUpperCase().slice(0, 15))} autoCapitalize="characters" placeholder="08AAKFS4821L1Z3" error={errors.gstin} />
+          <>
+            <Field label="GSTIN (optional)" value={gstin} onChangeText={(t) => setGstin(t.toUpperCase().slice(0, 15))} autoCapitalize="characters" placeholder="08AAKFS4821L1Z3" error={errors.gstin} />
+            <View style={styles.row}>
+              <View style={styles.flex}>
+                <Field label="PAN (optional)" value={pan} onChangeText={(t) => setPan(t.toUpperCase().slice(0, 10))} autoCapitalize="characters" placeholder="AAKFS4821L" error={errors.pan} />
+              </View>
+              <View style={styles.flex}>
+                <Field label="Email (optional)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="shop@example.com" error={errors.email} />
+              </View>
+            </View>
+          </>
         )}
       </Card>
+
+      {!isPlumber ? (
+        <Card style={styles.gap}>
+          <View style={styles.rowBetween}>
+            <Text variant="labelLg" color={colors.inkStrong}>
+              Shop documents
+            </Text>
+            <Badge label="Speeds up approval" tone="emerald" uppercase={false} />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={shopPhoto ? 'Change shop photo' : 'Add shop photo'}
+            disabled={uploading !== null}
+            onPress={() =>
+              void (async () => {
+                const file = await pickPhoto([4, 3]);
+                if (!file) return;
+                setUploading('shop-photo');
+                setFailure(null);
+                try {
+                  setShopPhoto({ key: await uploadFile(file, 'shop-photo'), uri: file.uri });
+                } catch (err) {
+                  setFailure(errorMessage(err));
+                } finally {
+                  setUploading(null);
+                }
+              })()
+            }
+            style={styles.doc}
+          >
+            {shopPhoto ? <Image source={{ uri: shopPhoto.uri }} style={styles.docThumb} contentFit="cover" /> : <Icon name="add_a_photo" size={24} color={colors.slate} />}
+            <View style={styles.flex}>
+              <Text variant="labelLg" color={colors.inkStrong}>
+                {uploading === 'shop-photo' ? 'Uploading…' : shopPhoto ? 'Shop photo added' : 'Shop front photo'}
+              </Text>
+              <Text variant="bodySm" color={colors.muted}>
+                Plumbers see it when choosing where they bought
+              </Text>
+            </View>
+            <Icon name={shopPhoto ? 'check_circle' : 'chevron_right'} size={20} color={shopPhoto ? colors.emerald : colors.faint} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={gstCertificate ? 'Change GST certificate' : 'Add GST certificate'}
+            disabled={uploading !== null}
+            onPress={() =>
+              void (async () => {
+                const file = await pickDocument();
+                if (!file) return;
+                setUploading('gst-certificate');
+                setFailure(null);
+                try {
+                  setGstCertificate({ key: await uploadFile(file, 'gst-certificate'), name: file.name });
+                } catch (err) {
+                  setFailure(errorMessage(err));
+                } finally {
+                  setUploading(null);
+                }
+              })()
+            }
+            style={styles.doc}
+          >
+            <Icon name="description" size={24} color={gstCertificate ? colors.emeraldDeep : colors.slate} />
+            <View style={styles.flex}>
+              <Text variant="labelLg" color={colors.inkStrong} numberOfLines={1}>
+                {uploading === 'gst-certificate' ? 'Uploading…' : (gstCertificate?.name ?? 'GST registration certificate')}
+              </Text>
+              <Text variant="bodySm" color={colors.muted}>
+                PDF or photo · optional if not GST registered
+              </Text>
+            </View>
+            <Icon name={gstCertificate ? 'check_circle' : 'chevron_right'} size={20} color={gstCertificate ? colors.emerald : colors.faint} />
+          </Pressable>
+        </Card>
+      ) : null}
 
       {isPlumber ? (
         <Card style={styles.gap}>
@@ -248,4 +353,6 @@ const styles = StyleSheet.create({
   privacy: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
   error: { flexDirection: 'row', gap: 8, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.errorWash },
   footer: { paddingBottom: space.sm },
+  doc: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
+  docThumb: { width: 56, height: 42, borderRadius: radius.md },
 });

@@ -48,7 +48,7 @@ export async function call<T>(request: Promise<{ data?: T }>): Promise<T> {
 /** After a mutation (scan, redemption, invoice), refetch everything on screen: balances move together. */
 export const refreshAll = () => queryClient.invalidateQueries();
 
-export type UploadPurpose = 'scan-photo' | 'invoice-document' | 'profile-photo' | 'shop-photo';
+export type UploadPurpose = 'scan-photo' | 'invoice-document' | 'profile-photo' | 'shop-photo' | 'gst-certificate';
 
 /** Picked file from expo-image-picker / expo-document-picker (web assets also carry a File). */
 export interface PickedFile {

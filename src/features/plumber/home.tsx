@@ -253,7 +253,7 @@ export function PlumberHome() {
                   subtitle={`${a.s.serial} • ${formatRelative(a.s.scannedAt)}`}
                   amount={a.s.status === 'Rejected' ? '0 Pts' : `+${formatNumber(a.s.points)} Pts`}
                   amountTone={a.s.status === 'Rejected' ? 'navy' : 'emerald'}
-                  caption={a.s.status === 'Approved' ? 'Verified' : a.s.status === 'Rejected' ? 'Rejected' : 'In Review'}
+                  caption={a.s.status === 'Approved' ? 'Verified' : a.s.status === 'Rejected' ? 'Rejected' : a.s.awaitingRetailer ? 'Dealer to confirm' : 'In Review'}
                 />
               ) : (
                 <ActivityRow

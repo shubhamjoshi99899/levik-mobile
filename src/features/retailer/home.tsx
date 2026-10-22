@@ -135,10 +135,18 @@ export function RetailerHome() {
 
         <QuickActions
           items={[
-            { icon: 'receipt_long', label: 'Upload Invoice', href: '/invoice-upload', highlight: true },
-            { icon: 'explore', label: 'Explore', href: '/explore' },
+            { icon: 'add_shopping_cart', label: 'Order stock', href: '/orders/new', highlight: true },
+            { icon: 'local_shipping', label: 'My orders', href: '/orders' },
+            { icon: 'inventory_2', label: 'Stock', href: '/stock' },
+            { icon: 'receipt', label: 'Bills', href: '/bills' },
+          ]}
+        />
+        <QuickActions
+          items={[
+            { icon: 'point_of_sale', label: 'Sales', href: '/sales' },
+            { icon: 'receipt_long', label: 'Upload Invoice', href: '/invoice-upload' },
             { icon: 'redeem', label: 'Rewards', href: '/rewards' },
-            { icon: 'account_balance_wallet', label: 'Sales Ledger', href: '/history' },
+            { icon: 'account_balance_wallet', label: 'Ledger', href: '/history' },
           ]}
         />
 

@@ -29,6 +29,7 @@ const SOURCE_ICON: Record<Entry['source'], { icon: string; tone: 'emerald' | 'go
   'Redemption Reversal': { icon: 'undo', tone: 'emerald' },
   'Manual Adjustment': { icon: 'tune', tone: 'navy' },
   'Opening Balance': { icon: 'account_balance_wallet', tone: 'navy' },
+  'Retail Sale': { icon: 'storefront', tone: 'emerald' },
 };
 
 const PAGE = 20;
