@@ -11,12 +11,17 @@ import { Icon } from '@/components/ui/icon';
 import { AppHeader, Screen } from '@/components/ui/screen';
 import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
+import { formatINR } from '@/lib/format';
 import { productImage } from '@/lib/product-image';
+import { AddToCart, CartBar, CartButton } from '../retailer/cart-parts';
 import { colors, radius, space } from '@/theme/tokens';
 import { DealerCard, EarningPill, SchemeList } from './parts';
 import { ProductDetailSkeleton } from '@/components/skeletons';
 
-/** One product: what it earns the caller, live schemes, and the dealers stocking it (nearby first). */
+/**
+ * One product. Plumbers: what it earns, live schemes and the dealers stocking it (nearby first).
+ * Retailers: their price and incentive with Add to cart; other shops' stock is never shown to them.
+ */
 export function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -35,9 +40,15 @@ export function ProductDetailScreen() {
   const { product, dealers, city } = data;
   const source = productImage(product.imageUrl);
   const nearby = dealers.filter((d) => d.sameCity).length;
+  const retailerPrice = product.listPrice;
 
   return (
-    <Screen header={<AppHeader back eyebrow={product.category} title={product.name} />} onRefresh={() => void refetch()} refreshing={isRefetching}>
+    <Screen
+      header={<AppHeader back eyebrow={product.category} title={product.name} right={retailerPrice != null ? <CartButton /> : undefined} />}
+      footer={retailerPrice != null ? <CartBar /> : undefined}
+      onRefresh={() => void refetch()}
+      refreshing={isRefetching}
+    >
       <View style={styles.hero}>
         {source ? <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={product.name} /> : <Icon name="bathtub" size={56} color={colors.onNavyMuted} />}
         <LinearGradient colors={['transparent', 'rgba(11,30,61,0.85)']} style={styles.heroShade} />
@@ -51,10 +62,30 @@ export function ProductDetailScreen() {
         </View>
       </View>
 
+      {retailerPrice != null ? (
+        <Card style={styles.gap}>
+          <View style={styles.rowBetween}>
+            <View>
+              <Text variant="labelSm" color={colors.slate}>
+                Your price
+              </Text>
+              <Text variant="headlineXl" color={colors.inkStrong}>
+                {formatINR(retailerPrice)}
+              </Text>
+              <Text variant="bodySm" color={colors.muted}>
+                Catalogue price per unit
+              </Text>
+            </View>
+            {product.rewardEligible ? <Badge label="Reward eligible" tone="emerald" icon="verified" uppercase={false} /> : null}
+          </View>
+          <AddToCart large product={{ productId: product.id, name: product.name, modelCode: product.modelCode, imageUrl: product.imageUrl, price: retailerPrice }} />
+        </Card>
+      ) : null}
+
       <Card style={styles.gap}>
         <View style={styles.rowBetween}>
           <Text variant="labelSm" color={colors.goldInk}>
-            You earn
+            {retailerPrice != null ? 'You earn when you sell it' : 'You earn'}
           </Text>
           <Text variant="bodySm" color={colors.muted}>
             {product.earning.basis}
@@ -94,6 +125,8 @@ export function ProductDetailScreen() {
         </Card>
       ) : null}
 
+      {retailerPrice != null ? null : (
+      <>
       <View>
         <Text variant="headlineMd" color={colors.inkStrong}>
           Available at {dealers.length} dealer{dealers.length === 1 ? '' : 's'}
@@ -110,6 +143,8 @@ export function ProductDetailScreen() {
       {dealers.map((d) => (
         <DealerCard key={d.id} dealer={d} stock={{ level: d.stockLevel, quantity: d.quantity }} onPress={() => router.push({ pathname: '/dealer/[id]', params: { id: d.id } })} />
       ))}
+      </>
+      )}
       {!product.rewardEligible ? <Badge label="This model does not earn points" tone="neutral" uppercase={false} /> : null}
     </Screen>
   );

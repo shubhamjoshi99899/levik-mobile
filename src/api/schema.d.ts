@@ -1928,7 +1928,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Catalogue with the caller's points per product and how many dealers have it in stock. */
+        /** Catalogue with the caller's points per product; plumbers also see how many dealers stock it, retailers their price. */
         get: operations["AppExploreController_products_v1"];
         put?: never;
         post?: never;
@@ -1962,7 +1962,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Listed dealers with how many products each has in stock (nearby first). */
+        /** Listed dealers with how many products each has in stock (nearby first). Plumbers only. */
         get: operations["AppExploreController_dealers_v1"];
         put?: never;
         post?: never;
@@ -1979,7 +1979,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** One dealer and every product they have in stock, with what each earns the caller. */
+        /** One dealer and every product they have in stock, with what each earns. Plumbers only. */
         get: operations["AppExploreController_dealer_v1"];
         put?: never;
         post?: never;
@@ -3662,7 +3662,7 @@ export interface components {
         };
         ExploreEarningDto: {
             /** @enum {string} */
-            basis: "per approved scan" | "per unit invoiced at MRP";
+            basis: "per approved scan" | "per unit sold at MRP";
             /** @description Points the caller earns from this product (0 if not reward-eligible). */
             points: number;
             /** @description Live schemes for the caller's role that count this product. */
@@ -3679,8 +3679,10 @@ export interface components {
             features: string[];
             imageUrl?: string;
             rewardEligible: boolean;
-            /** @description Approved, active dealers reporting this product in stock. */
-            dealersInStock: number;
+            /** @description Plumbers only: approved, active dealers reporting this product in stock. */
+            dealersInStock?: number;
+            /** @description Retailers only: catalogue price (MRP) their stock orders are priced at. */
+            listPrice?: number;
             earning: components["schemas"]["ExploreEarningDto"];
         };
         ExploreProductPageDto: {
@@ -3707,7 +3709,7 @@ export interface components {
         };
         ExploreProductDetailDto: {
             product: components["schemas"]["ExploreProductDto"];
-            /** @description Dealers with this product in stock — caller's city first, then most stock. */
+            /** @description Plumbers only (empty for retailers): dealers with this product in stock, caller's city first, then most stock. */
             dealers: components["schemas"]["ExploreDealerStockDto"][];
             /** @description Caller's city used for "nearby" ordering. */
             city?: string;
@@ -3755,8 +3757,10 @@ export interface components {
             features: string[];
             imageUrl?: string;
             rewardEligible: boolean;
-            /** @description Approved, active dealers reporting this product in stock. */
-            dealersInStock: number;
+            /** @description Plumbers only: approved, active dealers reporting this product in stock. */
+            dealersInStock?: number;
+            /** @description Retailers only: catalogue price (MRP) their stock orders are priced at. */
+            listPrice?: number;
             earning: components["schemas"]["ExploreEarningDto"];
         };
         ExploreDealerDetailDto: {

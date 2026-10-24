@@ -1,10 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { $api, api, call, refreshAll } from '@/api/client';
 import { errorMessage } from '@/api/errors';
 import { ListCardsSkeleton } from '@/components/skeletons';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -16,8 +15,12 @@ import { Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
 import { openDocument } from '@/lib/documents';
 import { formatDate, formatINR, formatNumber, formatRelative } from '@/lib/format';
+import { useDebounced } from '@/lib/use-debounced';
 import { colors, radius, space } from '@/theme/tokens';
+import { ProductsView } from '../explore/explore-tab';
 import { ProductThumb } from '../shared/parts';
+import { cart, useCart } from './cart';
+import { CartBar, CartButton } from './cart-parts';
 import { OrderProgress, OrderStatusBadge, QtyStepper, type Order, type OrderStatus } from './trade-parts';
 
 type Filter = 'all' | OrderStatus;
@@ -232,29 +235,43 @@ function CancelSheet({ open, onClose, orderId }: { open: boolean; onClose: () =>
   );
 }
 
-/** Picks products and quantities from the Levik catalogue and places the order. */
+/** Order stock: the Explore-style catalogue with prices, points and add-to-cart, plus a sticky cart bar. */
 export function NewOrderScreen() {
-  const router = useRouter();
   const [search, setSearch] = useState('');
-  const [cart, setCart] = useState<Record<string, { name: string; price: number; quantity: number }>>({});
+  const term = useDebounced(search.trim(), 300);
+  return (
+    <Screen header={<AppHeader back eyebrow="Levik trade" title="Order stock" right={<CartButton />} />} footer={<CartBar />}>
+      <View style={styles.intro}>
+        <Icon name="local_shipping" color={colors.goldLight} />
+        <View style={styles.flex}>
+          <Text variant="labelLg" color={colors.white}>
+            Catalogue prices · delivered to your shop
+          </Text>
+          <Text variant="bodySm" color={colors.onNavyMuted}>
+            Delivered orders are added to your stock automatically, with a purchase invoice.
+          </Text>
+        </View>
+      </View>
+      <Field value={search} onChangeText={setSearch} placeholder="Search model, name or category" prefix={<Icon name="search" size={20} color={colors.slate} />} accessibilityLabel="Search products" />
+      <ProductsView term={term} />
+    </Screen>
+  );
+}
+
+/** Review the cart, add a note and place the order. */
+export function CartScreen() {
+  const router = useRouter();
+  const { lines, units, total } = useCart();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const products = $api.useQuery('get', '/api/v1/app/products', { params: { query: { pageSize: 100, search: search.trim() || undefined } } });
-
-  const productsError: unknown = products.error;
-  const lines = Object.entries(cart).filter(([, l]) => l.quantity > 0);
-  const units = lines.reduce((s, [, l]) => s + l.quantity, 0);
-  const total = lines.reduce((s, [, l]) => s + l.quantity * l.price, 0);
-  const setQty = (p: { id: string; name: string; listPrice: number }, quantity: number) => setCart((c) => ({ ...c, [p.id]: { name: p.name, price: p.listPrice, quantity } }));
 
   const place = async () => {
     setBusy(true);
     setError(null);
     try {
-      const order = await call(
-        api.POST('/api/v1/app/orders', { body: { lines: lines.map(([productId, l]) => ({ productId, quantity: l.quantity })), note: note.trim() || undefined } }),
-      );
+      const order = await call(api.POST('/api/v1/app/orders', { body: { lines: lines.map((l) => ({ productId: l.productId, quantity: l.quantity })), note: note.trim() || undefined } }));
+      cart.clear();
       await refreshAll();
       router.replace(`/orders/${order.id}`);
     } catch (e) {
@@ -265,62 +282,72 @@ export function NewOrderScreen() {
   };
 
   return (
-    <View style={styles.flex}>
-      <Screen
-        header={<AppHeader back eyebrow="Levik trade" title="Order stock" />}
-        footer={
-          units > 0 ? (
-            <View style={styles.footer}>
-              <View style={styles.flex}>
-                <Text variant="labelLg" color={colors.inkStrong}>
-                  {units} units · {lines.length} {lines.length === 1 ? 'product' : 'products'}
-                </Text>
-                <Text variant="headlineSm" color={colors.inkStrong}>
-                  {formatINR(total)}
-                </Text>
-              </View>
-              <Button title="Place order" icon="send" variant="gold" size="md" loading={busy} onPress={() => void place()} />
+    <Screen
+      header={<AppHeader back eyebrow="Order stock" title="Your cart" />}
+      footer={
+        units > 0 ? (
+          <View style={styles.footer}>
+            <View style={styles.flex}>
+              <Text variant="bodySm" color={colors.muted}>
+                {units} {units === 1 ? 'unit' : 'units'} · {lines.length} {lines.length === 1 ? 'product' : 'products'}
+              </Text>
+              <Text variant="headlineMd" color={colors.inkStrong}>
+                {formatINR(total)}
+              </Text>
             </View>
-          ) : undefined
-        }
-      >
-        <Field value={search} onChangeText={setSearch} placeholder="Search model or product" prefix={<Icon name="search" size={20} color={colors.slate} />} accessibilityLabel="Search products" />
-        {error ? (
-          <Text variant="bodySm" color={colors.error}>
-            {error}
-          </Text>
-        ) : null}
-        {products.isLoading ? (
-          <ListCardsSkeleton count={5} />
-        ) : productsError ? (
-          <ErrorState error={productsError} onRetry={() => void products.refetch()} />
-        ) : (
-          <FlatList
-            scrollEnabled={false}
-            data={products.data?.items ?? []}
-            keyExtractor={(p) => p.id}
-            contentContainerStyle={styles.gap}
-            ListEmptyComponent={<Empty icon="search_off" title="No products found" />}
-            renderItem={({ item: p }) => (
-              <View style={styles.productRow}>
-                <ProductThumb imageUrl={p.imageUrl} size={56} label={p.name} />
-                <View style={styles.flex}>
-                  <Text variant="labelLg" color={colors.inkStrong} numberOfLines={1}>
-                    {p.name}
+            <Button title="Place order" icon="send" variant="gold" size="md" loading={busy} onPress={() => void place()} />
+          </View>
+        ) : undefined
+      }
+    >
+      {lines.length === 0 ? (
+        <Card>
+          <Empty icon="remove_shopping_cart" title="Your cart is empty" detail="Add products from the catalogue to build a stock order." />
+          <Button title="Browse catalogue" icon="storefront" variant="soft" onPress={() => router.replace('/orders/new')} />
+        </Card>
+      ) : (
+        <>
+          {lines.map((line) => (
+            <View key={line.productId} style={styles.cartLine}>
+              <ProductThumb imageUrl={line.imageUrl} size={64} label={line.name} />
+              <View style={styles.flex}>
+                <Text variant="labelLg" color={colors.inkStrong} numberOfLines={2}>
+                  {line.name}
+                </Text>
+                <Text variant="bodySm" color={colors.muted}>
+                  Model {line.modelCode} · {formatINR(line.price)} each
+                </Text>
+                <View style={styles.rowBetween}>
+                  <QtyStepper value={line.quantity} label={line.name} onChange={(n) => cart.setQuantity(line, n)} />
+                  <Text variant="labelLg" color={colors.inkStrong}>
+                    {formatINR(line.price * line.quantity)}
                   </Text>
-                  <Text variant="bodySm" color={colors.muted}>
-                    Model {p.modelCode} · {formatINR(p.listPrice)}
-                  </Text>
-                  {p.scanPoints ? <Badge label={`Plumbers earn ${p.scanPoints} pts`} tone="gold" uppercase={false} /> : null}
                 </View>
-                <QtyStepper value={cart[p.id]?.quantity ?? 0} onChange={(n) => setQty(p, n)} label={p.name} />
               </View>
-            )}
-          />
-        )}
-        {units > 0 ? <Field label="Note for Levik (optional)" value={note} onChangeText={setNote} placeholder="e.g. Deliver before Saturday" /> : null}
-      </Screen>
-    </View>
+            </View>
+          ))}
+          <Card style={styles.gap}>
+            <Field label="Note for Levik (optional)" value={note} onChangeText={setNote} placeholder="e.g. Deliver before Saturday" multiline />
+            <View style={styles.rowBetween}>
+              <Text variant="body" color={colors.muted}>
+                Total at catalogue prices
+              </Text>
+              <Text variant="headlineSm" color={colors.inkStrong}>
+                {formatINR(total)}
+              </Text>
+            </View>
+            <Text variant="bodySm" color={colors.muted}>
+              Levik confirms the order and delivers it. You can cancel until it is confirmed.
+            </Text>
+          </Card>
+          {error ? (
+            <Text variant="bodySm" color={colors.error}>
+              {error}
+            </Text>
+          ) : null}
+        </>
+      )}
+    </Screen>
   );
 }
 
@@ -335,6 +362,7 @@ const styles = StyleSheet.create({
   total: { paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border },
   event: { flexDirection: 'row', gap: space.md },
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5, backgroundColor: colors.gold },
-  productRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft },
+  intro: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, backgroundColor: colors.navy },
+  cartLine: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft },
   footer: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

@@ -14,7 +14,10 @@ import { Screen } from '@/components/ui/screen';
 import { Chips, Segmented } from '@/components/ui/segmented';
 import {Empty, ErrorState } from '@/components/ui/states';
 import { Text } from '@/components/ui/text';
+import { formatINR } from '@/lib/format';
 import { productImage } from '@/lib/product-image';
+import { useCart } from '../retailer/cart';
+import { AddToCart, CartBar } from '../retailer/cart-parts';
 import { useDebounced } from '@/lib/use-debounced';
 import { colors, radius, shadows, space } from '@/theme/tokens';
 import { HomeTopBar, initialsOf } from '../shared/parts';
@@ -24,13 +27,22 @@ import { DealerCardsSkeleton, ProductGridSkeleton } from '@/components/skeletons
 type Category = components['schemas']['ExploreProductDto']['category'];
 type View_ = 'products' | 'dealers';
 
+/** Room left under the grid so the floating cart bar never covers the last row. */
+const CART_BAR_SPACE = 96;
+
 const CATEGORIES: Category[] = ['Wall-Hung WC', 'One-Piece Western WC', 'Floor-Mounted EWC', 'Countertop Basin', 'Pedestal Basin', 'Half-Pedestal Basin', 'Wall-Hung Basin', 'Urinal', 'Cistern', 'Indian Pan', 'Kitchen Sink'];
 
-/** Explore: browse products (what they earn, how many dealers stock them) or dealers (nearby first). */
+/**
+ * Explore. Plumbers: products (what they earn, how many dealers stock them) or dealers (nearby first).
+ * Retailers: the catalogue with their price and incentive, to add to a stock order. They never see other
+ * shops' stock.
+ */
 export function ExploreTab() {
   const params = useLocalSearchParams<{ view?: View_ }>();
   const session = useSession();
   const name = session.status === 'signedIn' ? session.user.name : undefined;
+  const retailer = session.status === 'signedIn' && session.user.role === 'retailer';
+  const { units } = useCart();
   const [view, setView] = useState<View_>(params.view === 'dealers' ? 'dealers' : 'products');
   const [search, setSearch] = useState('');
   const term = useDebounced(search.trim(), 300);
@@ -38,16 +50,16 @@ export function ExploreTab() {
   return (
     <View style={styles.flex}>
       <HomeTopBar title="Explore" initials={initialsOf(name)} />
-      <Screen bottomInset={DOCK_HEIGHT} onRefresh={() => void refreshAll()}>
+      <Screen bottomInset={DOCK_HEIGHT + (retailer && units > 0 ? CART_BAR_SPACE : 0)} onRefresh={() => void refreshAll()}>
         <View>
           <Text variant="headlineLg" color={colors.inkStrong}>
-            Where to buy, what you earn
+            {retailer ? 'Levik catalogue' : 'Where to buy, what you earn'}
           </Text>
           <Text variant="body" color={colors.muted}>
-            Find Levik products at dealers near you and see the points each one earns.
+            {retailer ? 'Browse every model with your price and the points it earns you, and add it to your next stock order.' : 'Find Levik products at dealers near you and see the points each one earns.'}
           </Text>
         </View>
-        <Segmented
+        {retailer ? null : <Segmented
           value={view}
           onChange={(v) => {
             setView(v);
@@ -57,7 +69,7 @@ export function ExploreTab() {
             { value: 'products', label: 'Products' },
             { value: 'dealers', label: 'Dealers' },
           ]}
-        />
+        />}
         <Field
           value={search}
           onChangeText={setSearch}
@@ -65,13 +77,15 @@ export function ExploreTab() {
           prefix={<Icon name="search" size={20} color={colors.slate} />}
           accessibilityLabel={view === 'products' ? 'Search products' : 'Search dealers'}
         />
-        {view === 'products' ? <ProductsView term={term} /> : <DealersView term={term} />}
+        {view === 'products' || retailer ? <ProductsView term={term} /> : <DealersView term={term} />}
       </Screen>
+      {retailer ? <FloatingCart /> : null}
     </View>
   );
 }
 
-function ProductsView({ term }: { term: string }) {
+/** Product grid with category chips (Explore, and the retailer's Order stock page). */
+export function ProductsView({ term }: { term: string }) {
   const router = useRouter();
   const [category, setCategory] = useState<Category | 'all'>('all');
   const { data, error, isLoading, refetch } = $api.useQuery(
@@ -98,32 +112,60 @@ function ProductsView({ term }: { term: string }) {
 
 function ProductTile({ product, onPress }: { product: ExploreProduct; onPress: () => void }) {
   const source = productImage(product.imageUrl);
+  const retailerPrice = product.listPrice;
+  // The card is a plain View: the image and details open the product, and "Add" is a separate button beside
+  // them (a button may not contain another button).
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={product.name} onPress={onPress} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.9 }]}>
-      <View style={styles.tileImage}>
-        {source ? <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="bathtub" size={36} color={colors.onNavyMuted} />}
-        {product.earning.schemes.length ? (
-          <View style={styles.tileBadge}>
-            <Badge label="Scheme" tone="gold" icon="military_tech" uppercase={false} />
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.tileBody}>
-        <Text variant="labelSm" color={colors.slate} numberOfLines={1}>
-          Model {product.modelCode}
-        </Text>
-        <Text variant="labelLg" color={colors.inkStrong} numberOfLines={2} style={styles.tileName}>
-          {product.name}
-        </Text>
-        <EarningPill earning={product.earning} />
-        <View style={styles.availability}>
-          <Icon name="storefront" size={14} color={product.dealersInStock ? colors.emeraldDeep : colors.faint} />
-          <Text variant="bodySm" color={product.dealersInStock ? colors.emeraldDeep : colors.muted}>
-            {product.dealersInStock ? `${product.dealersInStock} dealer${product.dealersInStock > 1 ? 's' : ''} in stock` : 'Not in stock nearby'}
-          </Text>
+    <View style={styles.tile}>
+      <Pressable accessibilityRole="button" accessibilityLabel={product.name} onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.9 }]}>
+        <View style={styles.tileImage}>
+          {source ? <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="bathtub" size={36} color={colors.onNavyMuted} />}
+          {product.earning.schemes.length ? (
+            <View style={styles.tileBadge}>
+              <Badge label="Scheme" tone="gold" icon="military_tech" uppercase={false} />
+            </View>
+          ) : null}
         </View>
-      </View>
-    </Pressable>
+        <View style={styles.tileBody}>
+          <Text variant="labelSm" color={colors.slate} numberOfLines={1}>
+            Model {product.modelCode}
+          </Text>
+          <Text variant="labelLg" color={colors.inkStrong} numberOfLines={2} style={styles.tileName}>
+            {product.name}
+          </Text>
+          {retailerPrice != null ? (
+            <Text variant="headlineSm" color={colors.inkStrong}>
+              {formatINR(retailerPrice)}
+            </Text>
+          ) : null}
+          <EarningPill earning={product.earning} />
+          {retailerPrice == null ? (
+            <View style={styles.availability}>
+              <Icon name="storefront" size={14} color={product.dealersInStock ? colors.emeraldDeep : colors.faint} />
+              <Text variant="bodySm" color={product.dealersInStock ? colors.emeraldDeep : colors.muted}>
+                {product.dealersInStock ? `${product.dealersInStock} dealer${product.dealersInStock > 1 ? 's' : ''} in stock` : 'Not in stock nearby'}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </Pressable>
+      {retailerPrice != null ? (
+        <View style={styles.tileAction}>
+          <AddToCart product={{ productId: product.id, name: product.name, modelCode: product.modelCode, imageUrl: product.imageUrl, price: retailerPrice }} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Retailers: the cart bar floats above the tab dock while the cart has items. */
+function FloatingCart() {
+  const { units } = useCart();
+  if (units === 0) return null;
+  return (
+    <View style={[styles.floating, { bottom: DOCK_HEIGHT + space.sm }]}>
+      <CartBar />
+    </View>
   );
 }
 
@@ -163,6 +205,8 @@ const styles = StyleSheet.create({
   tileBadge: { position: 'absolute', top: 8, left: 8 },
   tileBody: { padding: space.md, gap: 6 },
   tileName: { minHeight: 36 },
+  tileAction: { paddingHorizontal: space.md, paddingBottom: space.md },
   availability: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cityRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  floating: { position: 'absolute', left: space.lg, right: space.lg, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft, ...shadows.raised },
 });
